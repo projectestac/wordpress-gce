@@ -5,19 +5,18 @@
  * 
  * @since 2.0.0
  */
-function gce_print_calendar( $feed_ids, $display = 'grid', $args = array(), $widget = false ) {
+function gce_print_calendar( $feed_ids, $display = 'grid', $args = array(), $widget = false, $uid = null ) {
+	
+	// Set static unique ID for setting id attributes
+	if( $uid == null ) {
+		STATIC $uid = 1;
+	}
+	
 	
 	// Load scripts
 	wp_enqueue_script( GCE_PLUGIN_SLUG . '-images-loaded' );
 	wp_enqueue_script( GCE_PLUGIN_SLUG . '-qtip' );
 	wp_enqueue_script( GCE_PLUGIN_SLUG . '-public' );
-	
-	wp_localize_script( GCE_PLUGIN_SLUG . '-public', 'gce', 
-				array( 
-					'ajaxurl'     => admin_url( 'admin-ajax.php' ),
-					'ajaxnonce'   => wp_create_nonce( 'gce_ajax_nonce' ),
-					'loadingText' => __( 'Loading...', 'gce' )
-				) );
 	
 	$defaults = array(
 			'title_text'      => '',
@@ -30,7 +29,10 @@ function gce_print_calendar( $feed_ids, $display = 'grid', $args = array(), $wid
 			'max_events'      => null,
 			'start_offset'    => null,
 			'paging_type'     => null,
-			'paging'          => null
+			'paging'          => null,
+			'max_num'         => null,
+			'range_start'     => null,
+			'show_tooltips'   => null
 		);
 	
 	$args = array_merge( $defaults, $args );
@@ -62,38 +64,78 @@ function gce_print_calendar( $feed_ids, $display = 'grid', $args = array(), $wid
 		if( $paging === null ) {
 			$paging = get_post_meta( $id, 'gce_paging', true );
 		}
+		
+		if( empty( $show_tooltips ) && $show_tooltips != 0 ) {
+			$tooltips = get_post_meta( $id, 'gce_show_tooltips', true );
+		} else {
+			$tooltips = $show_tooltips;
+		}
+		
+		if( ! empty( $tooltips ) && ( $tooltips === true || $tooltips == 'true' || $tooltips == '1' || $tooltips == 1 ) ) {
+			$show_tooltips = 'true';
+		} else {
+			$show_tooltips = 'false';
+		}
 	}
 	
 	if( 'grid' == $display ) {
-		
+	
 		global $localize;
 		
-		$target = ( $widget == 1 ? 'gce-widget-' : 'gce-page-grid-' ) . $feed_ids;
+		$target = 'gce-' . $uid;
 		
 		$localize[$target] = array( 
 				'target_element' => $target,
-				'feed_ids'   => $feed_ids,
-				'title_text' => $title_text,
-				'type'       => ( $widget == 1 ? 'widget' : 'page' )
+				'feed_ids'       => $feed_ids,
+				'title_text'     => $title_text,
+				'type'           => ( $widget == 1 ? 'widget' : 'page' ),
+				'show_tooltips'  => ( $show_tooltips == 'true' || $show_tooltips == '1' ? 'true' : 'false' )
 			);
 		
-		wp_localize_script( GCE_PLUGIN_SLUG . '-public', 'gce_grid', $localize );
-		
 		if( $widget == 1 ) {
-			$markup .= '<div class="gce-widget-grid" id="gce-widget-' . $feed_ids . '">';
+			$markup .= '<div class="gce-widget-grid gce-widget-' . esc_attr( $feed_ids ) . '" id="gce-' . $uid . '">';
 		} else {
-			$markup .= '<div class="gce-page-grid" id="gce-page-grid-' . $feed_ids . '">';
+			$markup .= '<div class="gce-page-grid gce-page-grid-' . esc_attr( $feed_ids ) . '" id="gce-' . $uid . '">';
 		}
 		
 		$markup .= $d->get_grid( $year, $month, $widget, $paging );
 		$markup .= '</div>';
+
 		
 	} else if( 'list' == $display || 'list-grouped' == $display ) {
 		
 		if( $widget ) {
-			$markup = '<div class="gce-widget-list" id="gce-widget-list-' . $feed_ids . '">' . $d->get_list( $grouped, ( $start + $start_offset ), $paging, $paging_interval, $start_offset, $max_events, $paging_type ) . '</div>';
+			$markup = '<div class="gce-widget-list gce-widget-list-' . esc_attr( $feed_ids ) . '" id="gce-' . $uid . '">' . $d->get_list( $grouped, ( $start + $start_offset ), $paging, $paging_interval, $start_offset, $max_events, $paging_type, $max_num ) . '</div>';
 		} else {
-			$markup = '<div class="gce-page-list" id="gce-page-list-' . $feed_ids . '">' . $d->get_list( $grouped, ( $start + $start_offset ), $paging, $paging_interval, $start_offset, $max_events, $paging_type ) . '</div>';
+			$markup = '<div class="gce-page-list gce-page-list-' . esc_attr( $feed_ids ) . '" id="gce-' . $uid . '">' . $d->get_list( $grouped, ( $start + $start_offset ), $paging, $paging_interval, $start_offset, $max_events, $paging_type ) . '</div>';
+		}
+	} else if( 'date-range-list' == $display ) {	
+		
+		$paging_interval = 'date-range';
+		
+		if( $widget ) {
+			$markup = '<div class="gce-widget-list gce-widget-list-' . esc_attr( $feed_ids ) . '" id="gce-' . $uid . '">' . $d->get_list( $grouped, $range_start, false, $paging_interval, $start_offset, INF, $paging_type, $max_num ) . '</div>';
+		} else {
+			$markup = '<div class="gce-page-list gce-page-list-' . esc_attr( $feed_ids ) . '" id="gce-' . $uid . '">' . $d->get_list( $grouped, $range_start, false, $paging_interval, $start_offset, INF, $paging_type, INF ) . '</div>';
+		}
+	} elseif ( 'date-range-grid' == $display ) {
+		
+		global $localize;
+		
+		$target = 'gce-' . $uid;
+		
+		$localize[$target] = array( 
+				'target_element' => $target,
+				'feed_ids'       => $feed_ids,
+				'title_text'     => $title_text,
+				'type'           => ( $widget == 1 ? 'widget' : 'page' ),
+				'show_tooltips'  => ( $show_tooltips == 'true' || $show_tooltips == '1' ? 'true' : 'false' )
+			);
+		
+		if( $widget ) {
+			$markup = '<div class="gce-widget-grid gce-widget-grid-' . esc_attr( $feed_ids ) . '" id="gce-' . $uid . '">' . $markup .= $d->get_grid( $year, $month, $widget, $paging ) . '</div>';
+		} else {
+			$markup = '<div class="gce-page-grid gce-page-grid-' . esc_attr( $feed_ids ) . '" id="gce-' . $uid . '">' . $markup .= $d->get_grid( $year, $month, $widget, $paging ) . '</div>';
 		}
 	}
 	
@@ -106,7 +148,9 @@ function gce_print_calendar( $feed_ids, $display = 'grid', $args = array(), $wid
 			$i++;
 		}
 	}
-
+	
+	$uid++;
+	
 	return $markup;
 }
 
@@ -116,23 +160,21 @@ function gce_print_calendar( $feed_ids, $display = 'grid', $args = array(), $wid
 * @since 2.0.0
 */
 function gce_ajax() {
+	
+	$uid    = esc_html( $_POST['gce_uid'] );
+	$ids    = esc_html( $_POST['gce_feed_ids'] );
+	$title  = esc_html( $_POST['gce_title_text'] );
+	$month  = esc_html( $_POST['gce_month'] );
+	$year   = esc_html( $_POST['gce_year'] );
+	$paging = esc_html( $_POST['gce_paging'] );
+	$type   = esc_html( $_POST['gce_type'] );
+	   
+	 // Split ID and pass as UID to function
+	$uid = explode( '-', $uid );
 
-    // check to see if the submitted nonce matches with the
-    // generated nonce we created earlier
-	if( ! check_ajax_referer( 'gce_ajax_nonce', 'gce_nonce' ) ) {
-		die( 'Request has failed.' );
-	}
-   
-	   $ids    = esc_html( $_POST['gce_feed_ids'] );
-	   $title  = esc_html( $_POST['gce_title_text'] );
-	   $month  = esc_html( $_POST['gce_month'] );
-	   $year   = esc_html( $_POST['gce_year'] );
-	   $paging = esc_html( $_POST['gce_paging'] );
-	   $type   = esc_html( $_POST['gce_type'] );
+	$title = ( 'null' == $title ) ? null : $title;
 
-	   $title = ( 'null' == $title ) ? null : $title;
-
-	   $args = array(
+	$args = array(
 		   'title_text' => $title,
 		   'month'      => $month,
 		   'year'       => $year,
@@ -140,10 +182,10 @@ function gce_ajax() {
 	   );
 
 	   if ( 'page' == $type ) {
-		   echo gce_print_calendar( $ids, 'grid', $args );
+		   echo gce_print_calendar( $ids, 'grid', $args, 0, $uid[1] );
 	   } elseif ( 'widget' == $type ) {
 		   $args['widget'] = 1;
-		   echo gce_print_calendar( $ids, 'grid', $args );
+		   echo gce_print_calendar( $ids, 'grid', $args, 1, $uid[1] );
 	   }
 	   
    die();
@@ -159,12 +201,6 @@ add_action( 'wp_ajax_gce_ajax', 'gce_ajax' );
 */
 function gce_ajax_list() {
 	
-    // check to see if the submitted nonce matches with the
-    // generated nonce we created earlier
-    if( ! check_ajax_referer( 'gce_ajax_nonce', 'gce_nonce' ) ) {
-		die( 'Request has failed.' );
-	}
-  
 	$grouped          = esc_html( $_POST['gce_grouped'] );
 	$start            = esc_html( $_POST['gce_start'] );
 	$ids              = esc_html( $_POST['gce_feed_ids'] );
@@ -216,7 +252,7 @@ function gce_feed_content( $content ) {
 	global $post;
 	
 	if( $post->post_type == 'gce_feed' ) {
-		$content = '[gcal id="' . $post->ID . '"]';
+		$content = '[gcal id="' . esc_attr( $post->ID ) . '"]';
 	}
 	
 	return $content;
@@ -237,12 +273,26 @@ add_filter( 'the_content', 'gce_feed_content' );
 function gce_ga_campaign_url( $base_url, $source, $medium, $campaign ) {
 	// $medium examples: 'sidebar_link', 'banner_image'
 
-	$url = add_query_arg( array(
+	$url = esc_url( add_query_arg( array(
 		'utm_source'   => $source,
 		'utm_medium'   => $medium,
 		'utm_campaign' => $campaign
-	), $base_url );
+	), $base_url ) );
 
-	return $url;
+	return esc_url( $url );
 }
 
+/**
+ * Function to convert date format mm/dd/YYYY to unix timestamp
+ */
+function gce_date_unix( $date ) {
+	$date = explode( '/', $date );
+			
+	$month = $date[0];
+	$day   = $date[1];
+	$year  = $date[2];
+
+	$timestamp = mktime( 0, 0, 0, $month, $day, $year );
+	
+	return $timestamp;
+}

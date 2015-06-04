@@ -1,11 +1,11 @@
 <?php
+
 /**
- * Show important upgrade notice.
+ * Show notice for API Settings
  *
- * @package   GCE
- * @author    Phil Derksen <pderksen@gmail.com>, Nick Young <mycorpweb@gmail.com>
- * @license   GPL-2.0+
- * @copyright 2014 Phil Derksen
+ * @package    GCE
+ * @subpackage admin/views
+ * @author     Phil Derksen <pderksen@gmail.com>, Nick Young <mycorpweb@gmail.com>
  */
 
 // Exit if accessed directly.
@@ -15,12 +15,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 ?>
 
-<!-- class="updated" or class="error" -->
-<div id="gce-admin-notice" class="error">
+<style>
+	#gce-install-notice .button-secondary {
+		margin-left: 15px;
+	}
+</style>
+
+<div id="gce-install-notice" class="updated">
 	<p>
-		<strong>GCal Events Important Update Nov. 17, 2014:</strong><br/>
-		Google took version 2 of the GCal API offline, which breaks all calendar feed displays.<br/>
-		<strong><a href="https://wordpress.org/support/topic/nov-17-temporary-easy-embed-display-fix" target="_blank">Here's a temporary fix for your calendar display</a></strong>
-		while we move the plugin to using the new GCal API this week. Thanks for your patience.
+		<h3><?php _e( 'GCal API Key Notice', 'gce' ); ?></h3>
+	
+		<?php _e( 'GCal Events uses the Google Calendar API version 3. By default this plugin uses a public shared key across all plugin users.', 'gce' ); ?>
+		<br/><br/>
+		<?php _e( 'This key is limited to 500,000 requests per day and 5 requests per second. To avoid running into any potential limits you can use your own Google API key.', 'gce' ); ?>
+	</p>
+	<p>
+		<a href="<?php echo admin_url( 'edit.php?post_type=gce_feed&page=google-calendar-events_general_settings' ); ?>" class="button-primary"><?php _e( 'Enter your GCal API key', 'gce' ); ?></a>
+		<a href="<?php echo admin_url( 'edit.php?post_type=gce_feed' ); ?>" class="button-secondary"><?php _e( 'Configure GCal feeds', 'gce' ); ?></a>
+		<a href="<?php echo esc_url( add_query_arg( 'gce-dismiss-install-nag', 1 ) ); ?>" class="button-secondary"><?php _e( 'Hide this', 'gce' ); ?></a>
 	</p>
 </div>

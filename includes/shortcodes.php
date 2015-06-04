@@ -28,13 +28,16 @@ function gce_gcal_shortcode( $attr ) {
 					'interval'              => null,
 					'interval_count'        => null,
 					'offset_interval_count' => null,
-					'offset_direction'      => null
+					'offset_direction'      => null,
+					'show_tooltips'         => null
 				), $attr, 'gce_feed' ) );
 	
 	// If no ID is specified then return
 	if( empty( $id ) ) {
 		return;
 	}
+	
+	$invalid_id = false;
 	
 	$paging_interval = null;
 	$max_events = null;
@@ -59,11 +62,11 @@ function gce_gcal_shortcode( $attr ) {
 		}
 		
 		if( $interval == null ) {
-			$interval = get_post_meta( $v, 'gce_list_max_length', true );
+			$interval = get_post_meta( $v, 'gce_events_per_page', true );
 		}
 		
 		if( $interval_count == null ) {
-			$interval_count = get_post_meta( $v, 'gce_list_max_num', true );
+			$interval_count = get_post_meta( $v, 'gce_per_page_num', true );
 		}
 		
 		if( $offset_interval_count == null ) {
@@ -76,6 +79,20 @@ function gce_gcal_shortcode( $attr ) {
 		
 		if( $paging == null ) {
 			$paging = get_post_meta( $v, 'gce_paging', true );
+		}
+		
+		if( $show_tooltips == null ) {
+			$show_tooltips = get_post_meta( $v, 'gce_show_tooltips', true );
+		}
+		
+		if( ! ( 'publish' == get_post_status( $v ) ) ) {
+			$invalid_id = true;
+		}
+	}
+	
+	if( $invalid_id ) {
+		if( current_user_can( 'manage_options' ) ) {
+			return '<p>' . __( 'There was a problem with one or more of your feed IDs. Please check your shortcode settings and make sure they are correct.', 'gce' ) . '</p>';
 		}
 	}
 	
@@ -100,6 +117,10 @@ function gce_gcal_shortcode( $attr ) {
 	} else if( $interval == 'events' ) {
 		$max_events = $interval_count;
 		$paging_type = 'events';
+	} else if( $interval == 'week' ) {
+		$paging_interval = 604800;
+	} else if( $interval == 'month' ) {
+		$paging_interval = 2629743;
 	}
 
 	// Port over old options
@@ -116,15 +137,16 @@ function gce_gcal_shortcode( $attr ) {
 	}
 
 	$args = array(
-		'title_text' => $title,
-		'sort'       => $order,
-		'grouped'    => ( $display == 'list-grouped' ? 1 : 0 ),
-		'month'      => null,
-		'year'       => null,
-		'widget'     => 0,
+		'title_text'      => $title,
+		'sort'            => $order,
+		'grouped'         => ( $display == 'list-grouped' ? 1 : 0 ),
+		'month'           => null,
+		'year'            => null,
+		'widget'          => 0,
 		'paging_interval' => $paging_interval,
-		'max_events' => $max_events,
-		'paging'     => $paging
+		'max_events'      => $max_events,
+		'paging'          => $paging,
+		'show_tooltips'   => $show_tooltips
 	);
 	
 	$args['start_offset'] = $start_offset;
