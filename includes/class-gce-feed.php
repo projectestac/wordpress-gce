@@ -102,27 +102,27 @@ class GCE_Feed {
 			$api_key = $gce_options['api_key'];
 		} else {
                     
-                    // XTEC ************ MODIFICAT - Choose the appropriate API key
-                    // 2014.10.08 @aginard
+            // XTEC ************ MODIFICAT - Choose the appropriate API key
+            // 2014.10.08 @aginard
 
-                    // Behaviour is as follows: First look for an API key in the database. If it is empty,
-                    //  check if it must use the Agora API key or the XTECBlocs API key. If it is none of
-                    //  them, use the default plugin API key.
-                    global $isAgora, $isBlocs;
+            // Behaviour is as follows: First look for an API key in the database. If it is empty,
+            //  check if it must use the Agora API key or the XTECBlocs API key. If it is none of
+            //  them, use the default plugin API key.
+            global $isAgora, $isBlocs;
 
-                    if ($isAgora) {
-                        $api_key = 'AIzaSyAxh4zWTv9TEdDcxec9L2I2BmaiqG_g44U'; // API key for Agora
-                    } elseif ($isBlocs) {
-                        $api_key = 'AIzaSyAHsmoXdhAn8l3Z96Ks_CQpmrRFpLVgMDg'; // API key for XTECBlocs
-                    } else {
-                        $api_key = $this->api_key;
-                    }
+            if ($isAgora) {
+                $api_key = 'AIzaSyAxh4zWTv9TEdDcxec9L2I2BmaiqG_g44U'; // API key for Agora
+            } elseif ($isBlocs) {
+                $api_key = 'AIzaSyAHsmoXdhAn8l3Z96Ks_CQpmrRFpLVgMDg'; // API key for XTECBlocs
+            } else {
+                $api_key = $this->api_key;
+            }
 
-                    //************ ORIGINAL
-                    /*           
-                        $api_key = $this->api_key;
-                    */
-                    //************ FI
+            //************ ORIGINAL
+            /*           
+                $api_key = $this->api_key;
+            */
+            //************ FI
                     
 		}
 		

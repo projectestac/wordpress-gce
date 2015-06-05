@@ -65,6 +65,15 @@
 	}
 ?>
 
+<?php 
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+if (is_xtec_super_admin()) {
+
+//************ FI
+?>
+
 <div id="gce-admin-promo">
 	<?php echo __( 'Want to be in the know?', 'gce' ); ?>
 	<strong>
@@ -73,6 +82,15 @@
 		</a>
 	</strong>
 </div>
+
+<?php
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+}
+
+//************ FI
+?>
 
 <table class="form-table">
 	<tr>
@@ -97,6 +115,14 @@
 		</td>
 	</tr>
 
+<?php 
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+if (is_xtec_super_admin()) {
+
+//************ FI
+?>
 	<tr>
 		<th scope="row"><label for="gce_search_query"><?php _e( 'Search Query', 'gce' ); ?></label></th>
 		<td>
@@ -104,6 +130,15 @@
 			<p class="description"><?php _e( 'Find and show events based on a search query.', 'gce' ); ?></p>
 		</td>
 	</tr>
+
+<?php
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+}
+
+//************ FI
+?>
 
 	<tr>
 		<th scope="row"><label for="gce_expand_recurring"><?php _e( 'Expand Recurring Events?', 'gce' ); ?></label></th>
@@ -113,13 +148,31 @@
 		</td>
 	</tr>
 
-	<tr>
+<?php 
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+if (is_xtec_super_admin()) {
+
+//************ FI
+?>
+
+    <tr>
 		<th scope="row"><label for="gce_multi_day_events"><?php _e( 'Multiple Day Events', 'gce' ); ?></label></th>
 		<td>
 			<input type="checkbox" name="gce_multi_day_events" id="gce_multi_day_events" value="1" <?php checked( $gce_multi_day_events, '1' ); ?> /> <?php _e( 'Show on each day', 'gce' ); ?>
 			<p class="description"><?php _e( 'Display multiple day events on each day that they span. If disabled, multiple day events will be displayed only on the first day they occur.', 'gce' ); ?></p>
 		</td>
 	</tr>
+
+<?php
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+}
+
+//************ FI
+?>
 
 	<tr>
 		<th scope="row"><label for="gce_display_mode"><?php _e( 'Display Mode', 'gce' ); ?></label></th>
@@ -135,7 +188,16 @@
 		</td>
 	</tr>
 	
-	<tr class="gce-display-option <?php echo ( $use_range == true ? 'gce-admin-hidden' : '' ); ?>">
+<?php 
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+if (is_xtec_super_admin()) {
+
+//************ FI
+?>
+
+    <tr class="gce-display-option <?php echo ( $use_range == true ? 'gce-admin-hidden' : '' ); ?>">
 		<th scope="row"><label for="gce_events_per_page"><?php _e( 'Events per Page', 'gce' ); ?></label></th>
 		<td>
 			<select id="gce_events_per_page" name="gce_events_per_page">
@@ -260,4 +322,14 @@
 			<input type="button" class="button button-primary button-large gce-feed-update-button" value="Save Changes">
 		</td>
 	</tr>
+
+<?php
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+}
+
+//************ FI
+?>
+
 </table>

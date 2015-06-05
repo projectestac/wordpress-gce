@@ -121,11 +121,11 @@ class Google_Calendar_Events_Admin {
 	
 	public function add_plugin_admin_menu() {
 
-        // XTEC ************ AFEGIT - Block access to Options menu to all users but xtecadmin
+        // XTEC ************ AFEGIT - Block access to Options menu to all users but superadmins
         // 2014.10.22 @aginard
-        global $isAgora, $isBlocs;
+        
+        if (is_xtec_super_admin()) {
 
-        if (($isAgora && is_xtecadmin()) || $isBlocs) {
         //************ FI
             
 		// Add Help submenu page
@@ -138,7 +138,7 @@ class Google_Calendar_Events_Admin {
 			array( $this, 'display_admin_page' )
 		);
 
-        // XTEC ************ AFEGIT - Block access to Options menu to all users but xtecadmin
+        // XTEC ************ AFEGIT - Block access to Options menu to all users but superadmins
         // 2014.10.22 @aginard
         }
         //************ FI
