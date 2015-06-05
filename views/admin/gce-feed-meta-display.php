@@ -271,7 +271,16 @@ if (is_xtec_super_admin()) {
 		</td>
 	</tr>
 	
-	<tr class="gce-display-option <?php echo ( $use_range == true ? 'gce-admin-hidden' : '' ); ?>">
+<?php
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+}
+
+//************ FI
+?>
+
+    <tr class="gce-display-option <?php echo ( $use_range == true ? 'gce-admin-hidden' : '' ); ?>">
 		<th scope="row"><label for="gce_paging"><?php _e( 'Show Paging Links', 'gce' ); ?></label></th>
 		<td>
 			<input type="checkbox" name="gce_paging" id="gce_paging" value="1" <?php checked( $gce_paging, '1' ); ?> />
@@ -287,6 +296,15 @@ if (is_xtec_super_admin()) {
 		</td>
 	</tr>
 	
+<?php 
+// XTEC ************ AFEGIT - Block access to all users but superadmins
+// 2015.06.05 @aginard
+
+if (is_xtec_super_admin()) {
+
+//************ FI
+?>
+
 	<tr>
 		<th scope="row"><label for="gce_date_format"><?php _e( 'Date Format', 'gce' ); ?></label></th>
 		<td>
