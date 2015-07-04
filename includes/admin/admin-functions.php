@@ -58,8 +58,19 @@ function gce_default_editor_content( $content, $post ) {
 		add_post_meta( $post->ID, 'gce_expand_recurring', 1 );
 		add_post_meta( $post->ID, 'gce_retrieve_from', 'today' );
 		add_post_meta( $post->ID, 'gce_retrieve_until', 'end_time' );
+
+// XTEC ************ MODIFICAT - Changed default cache duration to 300 seconds
+// 2015.07.06 @aginard
+
+		add_post_meta( $post->ID, 'gce_cache', 300 );
+
+//************ ORIGINAL
+/*
 		add_post_meta( $post->ID, 'gce_cache', 43200 );
-		add_post_meta( $post->ID, 'gce_paging', 1 );
+*/
+//************ FI
+
+        add_post_meta( $post->ID, 'gce_paging', 1 );
 		add_post_meta( $post->ID, 'gce_list_start_offset_num', '0' );
 		add_post_meta( $post->ID, 'gce_feed_end_num', 2 );
 		add_post_meta( $post->ID, 'gce_feed_start_num', 1 );
