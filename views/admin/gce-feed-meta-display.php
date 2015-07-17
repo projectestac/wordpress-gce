@@ -345,6 +345,8 @@ if (is_xtec_super_admin()) {
 // XTEC ************ AFEGIT - Block access to all users but superadmins
 // 2015.06.05 @aginard
 
+} else {
+    echo '<input type="hidden" class="" name="gce_cache" id="gce_cache" value="' . esc_attr( $gce_cache ) .'" />';
 }
 
 //************ FI
