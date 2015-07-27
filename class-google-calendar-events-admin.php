@@ -20,7 +20,7 @@ class Google_Calendar_Events_Admin {
 	 * @var      object
 	 */
 	protected static $instance = null;
-	
+
 	protected $version = '';
 
 	/**
@@ -42,27 +42,27 @@ class Google_Calendar_Events_Admin {
 
 		$plugin = Google_Calendar_Events::get_instance();
 		$this->plugin_slug = $plugin->get_plugin_slug();
-		
+
 		$this->version = $plugin->get_plugin_version();
-		
+
 		add_filter( 'plugin_action_links_' . plugin_basename( plugin_dir_path( __FILE__ ) . $this->plugin_slug . '.php' ), array( $this, 'add_action_links' ) );
-		
+
 		// Setup admin side constants
 		add_action( 'init', array( $this, 'define_admin_constants' ) );
-		
+
 		// Add admin styles
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ) );
-		
+
 		// Add admin JS
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
-		
+
 		// Add the options page and menu item.
 		add_action( 'admin_menu', array( $this, 'add_plugin_admin_menu' ), 2 );
-		
+
 		// Add admin notice after plugin activation. Also check if should be hidden.
 		add_action( 'admin_notices', array( $this, 'show_admin_notice' ) );
 	}
-	
+
 	/**
 	 * Show notice after plugin install/activate
 	 * Also check if user chooses to hide it.
@@ -74,7 +74,7 @@ class Google_Calendar_Events_Admin {
 		if ( false == get_option( 'gce_show_admin_install_notice' ) ) {
 			return;
 		}
-		
+
 		$screen = get_current_screen();
 
 		// Delete stored value if "hide" button click detected (custom querystring value set to 1).
@@ -88,7 +88,7 @@ class Google_Calendar_Events_Admin {
 			include_once( 'includes/admin/admin-notice.php' );
 		}
 	}
-	
+
 	/**
 	 * Check if viewing one of this plugin's admin pages.
 	 *
@@ -100,7 +100,7 @@ class Google_Calendar_Events_Admin {
 		if ( ! isset( $this->plugin_screen_hook_suffix ) ) {
 			return false;
 		}
-		
+
 		$screen = get_current_screen();
 
 		if ( $screen->id == 'edit-gce_feed' || $screen->id == 'gce_feed' || in_array( $screen->id, $this->plugin_screen_hook_suffix ) || $screen->id == 'widgets' ) {
@@ -109,7 +109,7 @@ class Google_Calendar_Events_Admin {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Fired when the plugin is activated.
 	 *
@@ -118,16 +118,16 @@ class Google_Calendar_Events_Admin {
 	public static function activate() {
 		update_option( 'gce_show_admin_install_notice', 1 );
 	}
-	
+
 	public function add_plugin_admin_menu() {
 
         // XTEC ************ AFEGIT - Block access to Options menu to all users but superadmins
         // 2014.10.22 @aginard
-        
-        if (is_xtec_super_admin()) {
+
+        if (is_xtec_blocs_admin()) {
 
         //************ FI
-            
+
 		// Add Help submenu page
 		$this->plugin_screen_hook_suffix[] = add_submenu_page(
 			'edit.php?post_type=gce_feed',
@@ -143,31 +143,31 @@ class Google_Calendar_Events_Admin {
         }
         //************ FI
 	}
-	
+
 	public function display_admin_page() {
 		include_once( 'views/admin/admin.php' );
 	}
-	
+
 	 /**
 	 * Enqueue JS for the admin area
-	 * 
+	 *
 	 * @since 2.0.0
 	 */
 	public function enqueue_admin_scripts() {
-		
+
 		if( $this->viewing_this_plugin() ) {
 			wp_enqueue_script( 'jquery-ui-datepicker' );
 			wp_enqueue_script( 'gce-admin', plugins_url( 'js/gce-admin.js', __FILE__ ), array( 'jquery' ), $this->version, true );
 		}
 	}
-	
+
 	/**
 	 * Enqueue styles for the admin area
-	 * 
+	 *
 	 * @since 2.0.0
 	 */
 	public function enqueue_admin_styles() {
-		
+
 		if( $this->viewing_this_plugin() ) {
 			global $wp_scripts;
 
@@ -176,14 +176,14 @@ class Google_Calendar_Events_Admin {
 
 			// Use minified CSS from CDN referenced at https://code.jquery.com/ui/
 			wp_enqueue_style( 'jquery-ui-smoothness', '//code.jquery.com/ui/' . $queryui->ver . '/themes/smoothness/jquery-ui.min.css', array(), $this->version );
- 			
+
  			wp_enqueue_style( 'gce-admin', plugins_url( 'css/admin.css', __FILE__ ), array(), $this->version, 'all' );
  		}
 	}
-	
+
 	/**
 	 * Define constants that will be used throughout admin specific code
-	 * 
+	 *
 	 * @since 2.0.0
 	 */
 	public function define_admin_constants() {
@@ -208,10 +208,10 @@ class Google_Calendar_Events_Admin {
 
 		return self::$instance;
 	}
-	
+
 	/**
 	 * Return plugin name
-	 * 
+	 *
 	 * @since 2.0.0
 	 */
 	public function get_plugin_title() {

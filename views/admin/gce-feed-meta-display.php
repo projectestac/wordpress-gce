@@ -10,14 +10,14 @@
  */
 
 	global $post;
-	
+
 	$post_id = $post->ID;
-	
+
 	// Clear the cache if the button was clicked to do so
 	if( isset( $_GET['clear_cache'] ) && $_GET['clear_cache'] == 1 ) {
 		gce_clear_cache( $post_id );
 	}
-	
+
 	// Load up all post meta data
 	$gce_feed_url                    = get_post_meta( $post->ID, 'gce_feed_url', true );
 	$gce_date_format                 = get_post_meta( $post->ID, 'gce_date_format', true );
@@ -38,10 +38,10 @@
 	$gce_feed_end_num                = get_post_meta( $post->ID, 'gce_feed_end_num', true );
 	$gce_feed_range_start            = get_post_meta( $post->ID, 'gce_feed_range_start', true );
 	$gce_feed_range_end              = get_post_meta( $post->ID, 'gce_feed_range_end', true );
-	
+
 	$range = selected( $gce_display_mode, 'date-range-list', false ) || selected( $gce_display_mode, 'date-range-grid', false );
 	$use_range = ( $range ? true : false );
-	
+
 	if( empty( $gce_events_per_page ) ) {
 		$gce_events_per_page = 'days';
 	}
@@ -51,25 +51,25 @@
 	if( empty( $gce_list_start_offset_num ) ) {
 		$gce_list_start_offset_num = 0;
 	}
-	
+
 	if( empty( $gce_feed_start ) ) {
 		$gce_feed_start = 'years';
 	}
-	
+
 	if( empty( $gce_feed_end ) ) {
 		$gce_feed_end = 'years';
 	}
-	
+
 	if( empty( $gce_per_page_num ) ) {
 		$gce_per_page_num = 7;
 	}
 ?>
 
-<?php 
+<?php
 // XTEC ************ AFEGIT - Block access to all users but superadmins
 // 2015.06.05 @aginard
 
-if (is_xtec_super_admin()) {
+if (is_xtec_blocs_admin()) {
 
 //************ FI
 ?>
@@ -115,11 +115,11 @@ if (is_xtec_super_admin()) {
 		</td>
 	</tr>
 
-<?php 
+<?php
 // XTEC ************ AFEGIT - Block access to all users but superadmins
 // 2015.06.05 @aginard
 
-if (is_xtec_super_admin()) {
+if (is_xtec_blocs_admin()) {
 
 //************ FI
 ?>
@@ -148,11 +148,11 @@ if (is_xtec_super_admin()) {
 		</td>
 	</tr>
 
-<?php 
+<?php
 // XTEC ************ AFEGIT - Block access to all users but superadmins
 // 2015.06.05 @aginard
 
-if (is_xtec_super_admin()) {
+if (is_xtec_blocs_admin()) {
 
 //************ FI
 ?>
@@ -187,12 +187,12 @@ if (is_xtec_super_admin()) {
 			<p class="description"><?php _e( 'Select how to display this feed.', 'gce' ); ?></p>
 		</td>
 	</tr>
-	
-<?php 
+
+<?php
 // XTEC ************ AFEGIT - Block access to all users but superadmins
 // 2015.06.05 @aginard
 
-if (is_xtec_super_admin()) {
+if (is_xtec_blocs_admin()) {
 
 //************ FI
 ?>
@@ -212,7 +212,7 @@ if (is_xtec_super_admin()) {
 			<p class="description"><?php _e( 'How many events to display per page (List View only).', 'gce' ); ?></p>
 		</td>
 	</tr>
-	
+
 	<tr class="gce-display-option <?php echo ( $use_range == true ? 'gce-admin-hidden' : '' ); ?>">
 		<th scope="row"><label for="gce_list_start_offset_num"><?php _e( 'Display Start Date Offset', 'gce' ); ?></label></th>
 		<td>
@@ -224,7 +224,7 @@ if (is_xtec_super_admin()) {
 			<p class="description"><?php _e( 'Change to initially display events on a date other than today (List View only).', 'gce' ); ?></p>
 		</td>
 	</tr>
-	
+
 	<tr class="gce-display-option <?php echo ( $use_range == true ? 'gce-admin-hidden' : '' ); ?>">
 		<th scope="row"><label for="gce_feed_start"><?php _e( 'Earliest Feed Event Date', 'gce' ); ?></label></th>
 		<td>
@@ -241,9 +241,9 @@ if (is_xtec_super_admin()) {
 				<br>
 				<?php _e( '<strong>Note:</strong> Total events are currently limited to 2,500 by the Google Calendar API.', 'gce' ); ?>
 			</p>
-		</td>	
+		</td>
 	</tr>
-	
+
 	<tr class="gce-display-option <?php echo ( $use_range == true ? 'gce-admin-hidden' : '' ); ?>">
 		<th scope="row"><label for="gce_feed_end"><?php _e( 'Latest Feed Event Date', 'gce' ); ?></label></th>
 		<td>
@@ -258,7 +258,7 @@ if (is_xtec_super_admin()) {
 			<p class="description"><?php _e( 'Set how far in the future to retrieve events regardless of initial display.', 'gce' ); ?></p>
 		</td>
 	</tr>
-	
+
 	<tr class="gce-custom-range <?php echo ( $use_range == true ? '' : 'gce-admin-hidden' ); ?>">
 		<th scope="row"><label for="gce_feed_use_range"><?php _e( 'Use Custom Date Range', 'gce' ); ?></label></th>
 		<td>
@@ -270,7 +270,7 @@ if (is_xtec_super_admin()) {
 			</span>
 		</td>
 	</tr>
-	
+
 <?php
 // XTEC ************ AFEGIT - Block access to all users but superadmins
 // 2015.06.05 @aginard
@@ -287,7 +287,7 @@ if (is_xtec_super_admin()) {
 			<?php _e( 'Display Next and Back navigation links.', 'gce' ); ?>
 		</td>
 	</tr>
-	
+
 	<tr>
 		<th scope="row"><label for="gce_show_tooltips"><?php _e( 'Show Tooltips', 'gce' ); ?></label></th>
 		<td>
@@ -295,12 +295,12 @@ if (is_xtec_super_admin()) {
 			<?php _e( 'Display tooltips when hovering over events (Grid View only).', 'gce' ); ?>
 		</td>
 	</tr>
-	
-<?php 
+
+<?php
 // XTEC ************ AFEGIT - Block access to all users but superadmins
 // 2015.06.05 @aginard
 
-if (is_xtec_super_admin()) {
+if (is_xtec_blocs_admin()) {
 
 //************ FI
 ?>
@@ -315,7 +315,7 @@ if (is_xtec_super_admin()) {
 			</p>
 		</td>
 	</tr>
-	
+
 	<tr>
 		<th scope="row"><label for="gce_time_format"><?php _e( 'Time Format', 'gce' ); ?></label></th>
 		<td>
@@ -326,7 +326,7 @@ if (is_xtec_super_admin()) {
 			</p>
 		</td>
 	</tr>
-	
+
 	<tr>
 		<th scope="row"><label for="gce_cache"><?php _e( 'Cache Duration', 'gce' ); ?></label></th>
 		<td>
@@ -334,7 +334,7 @@ if (is_xtec_super_admin()) {
 			<p class="description"><?php _e( 'The length of time, in seconds, to cache the feed (43200 = 12 hours). If this feed changes regularly, you may want to reduce the cache duration.', 'gce' ); ?></p>
 		<td>
 	</tr>
-	
+
 	<tr>
 		<td colspan="2">
 			<input type="button" class="button button-primary button-large gce-feed-update-button" value="Save Changes">
