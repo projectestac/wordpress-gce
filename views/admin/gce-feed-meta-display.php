@@ -272,15 +272,24 @@ if (is_xtec_super_admin()) {
 	</tr>
 	
 <?php
-// XTEC ************ AFEGIT - Block access to all users but superadmins
-// 2015.06.05 @aginard
+// XTEC ************ AFEGIT - Block access to all users but superadmins (but necessary to add metapost parameters to avoid problems, like list-grouped visualization)
+// 2016.02.19 @sarjona
 
 } else {
 ?>
+	<input type="hidden" id="gce_date_format" name="gce_date_format" value="<?php echo esc_attr( $gce_date_format ); ?>" />
+	<input type="hidden" id="gce_events_per_page" name="gce_events_per_page" value="<?php echo esc_attr( $gce_events_per_page ); ?>" />
 	<input type="hidden" id="gce_feed_start" name="gce_feed_start" value="<?php echo esc_attr( $gce_feed_start ); ?>" />
 	<input type="hidden" id="gce_feed_start_num" name="gce_feed_start_num" value="<?php echo esc_attr( $gce_feed_start_num ); ?>" />
 	<input type="hidden" id="gce_feed_end" name="gce_feed_end" value="<?php echo esc_attr( $gce_feed_end ); ?>" />
 	<input type="hidden" id="gce_feed_end_num" name="gce_feed_end_num" value="<?php echo esc_attr( $gce_feed_end_num ); ?>" />
+	<input type="hidden" id="gce_feed_range_end" name="gce_feed_range_end" value="<?php echo esc_attr( $gce_feed_range_end ); ?>" />
+	<input type="hidden" id="gce_feed_range_start" name="gce_feed_range_start" value="<?php echo esc_attr( $gce_feed_range_start ); ?>" />
+	<input type="hidden" id="gce_list_start_offset_direction" name="gce_list_start_offset_direction" value="<?php echo esc_attr( $gce_list_start_offset_direction ); ?>" />
+	<input type="hidden" id="gce_list_start_offset_num" name="gce_list_start_offset_num" value="<?php echo esc_attr( $gce_list_start_offset_num ); ?>" />
+	<input type="hidden" id="gce_per_page_num" name="gce_per_page_num" value="<?php echo esc_attr( $gce_per_page_num ); ?>" />
+	<input type="hidden" id="gce_search_query" name="gce_search_query" value="<?php echo esc_attr( $gce_search_query ); ?>" />
+	<input type="hidden" id="gce_time_format" name="gce_time_format" value="<?php echo esc_attr( $gce_time_format ); ?>" />
 <?php
 }
 //************ FI
