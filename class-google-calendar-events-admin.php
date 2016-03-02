@@ -140,6 +140,10 @@ class Google_Calendar_Events_Admin {
 
         // XTEC ************ AFEGIT - Block access to Options menu to all users but superadmins
         // 2014.10.22 @aginard
+        } else {
+        	if (empty($this->plugin_screen_hook_suffix)) {
+        		$this->plugin_screen_hook_suffix = array();
+        	}
         }
         //************ FI
 	}
