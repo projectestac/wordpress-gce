@@ -34,10 +34,24 @@ function gce_register_settings() {
 				'size' => 'regular-text',
 				'type' => 'text'
 			),
+			'always_enqueue' => array(
+				'id'   => 'always_enqueue',
+				'name' => __( 'Always Enqueue Scripts & Styles', 'gce' ),
+				'desc' => __( 'Enqueue this plugin\'s scripts and styles on every post and page.', 'gce' ) . '<br/>' .
+				          '<p class="description">' . __( 'Useful if using shortcodes in widgets or other non-standard locations.', 'gce' ) . '</p>',
+				'type' => 'checkbox'
+			),
+			'disable_css' => array(
+				'id'   => 'disable_css',
+				'name' => __( 'Disable Plugin CSS', 'sc' ),
+				'desc' => __( "If this option is checked, this plugin's CSS file will not be referenced.", 'gce' ),
+				'type' => 'checkbox'
+			),
 			'save_settings' => array(
 				'id'   => 'save_settings',
 				'name' => __( 'Save Settings', 'gce' ),
-				'desc' => __( 'Save your settings when uninstalling this plugin. Useful when upgrading or re-installing.', 'gce' ),
+				'desc' => __( 'Save your settings when uninstalling this plugin.', 'gce' ) . '<br/>' .
+				          '<p class="description">' . __( 'Useful when upgrading or re-installing.', 'gce' ) . '</p>',
 				'type' => 'checkbox'
 			)
 		)
@@ -112,11 +126,11 @@ function gce_checkbox_callback( $args ) {
 	global $gce_options;
 
 	$checked = isset( $gce_options[$args['id']] ) ? checked( 1, $gce_options[$args['id']], false ) : '';
-	$html = "\n" . '<input type="checkbox" id="gce_settings_' . $args['section'] . '[' . $args['id'] . ']" name="gce_settings_' . $args['section'] . '[' . $args['id'] . ']" value="1" ' . $checked . '/>' . "\n";
+	$html = "\n" . '<input type="checkbox" id="gce_settings_' . esc_attr( $args['section'] ) . '[' . esc_attr( $args['id'] ) . ']" name="gce_settings_' . esc_attr( $args['section'] ) . '[' . esc_attr( $args['id'] ) . ']" value="1" ' . $checked . '/>' . "\n";
 
 	// Render description text directly to the right in a label if it exists.
 	if ( ! empty( $args['desc'] ) )
-		$html .= '<label for="gce_settings_' . $args['section'] . '[' . $args['id'] . ']"> '  . $args['desc'] . '</label>' . "\n";
+		$html .= '<label for="gce_settings_' . esc_attr( $args['section'] ) . '[' . esc_attr( $args['id'] ) . ']"> '  . $args['desc'] . '</label>' . "\n";
 
 	echo $html;
 }
@@ -138,7 +152,7 @@ function gce_text_callback( $args ) {
 		$value = isset( $args['std'] ) ? $args['std'] : '';
 
 	$size = ( isset( $args['size'] ) && ! is_null( $args['size'] ) ) ? $args['size'] : '';
-	$html = "\n" . '<input type="text" class="' . $size . '" id="gce_settings_' . $args['section'] . '[' . $args['id'] . ']" name="gce_settings_' . $args['section'] . '[' . $args['id'] . ']" value="' . esc_attr( $value ) . '"/>' . "\n";
+	$html = "\n" . '<input type="text" class="' . esc_attr( $size ) . '" id="gce_settings_' . esc_attr( $args['section'] ) . '[' . esc_attr( $args['id'] ) . ']" name="gce_settings_' . esc_attr( $args['section'] ) . '[' . esc_attr( $args['id'] ) . ']" value="' . esc_attr( $value ) . '"/>' . "\n";
 
 	// Render and style description text underneath if it exists.
 	if ( ! empty( $args['desc'] ) ) {
@@ -184,6 +198,7 @@ function gce_get_settings() {
 		$general = get_option( 'gce_settings_general' );
 		
 		$general['save_settings']      = 1;
+		$general['always_enqueue']     = 1;
 		
 		update_option( 'gce_settings_general', $general );
 	}

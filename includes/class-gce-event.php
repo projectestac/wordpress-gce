@@ -35,13 +35,21 @@ class GCE_Event {
 				$this->day_type = 'SWD';
 			} else {
 				if ( ( '12:00 am' == date( 'g:i a', $start_time ) ) && ( '12:00 am' == date( 'g:i a', $end_time ) ) ) {
-					$this->day_type = 'MWD';
+					if( $end_time - $start_time > 86400 ) {
+						$this->day_type = 'MWD';
+					} else {
+						$this->day_type = 'SWD';
+					}
 				} else {
 					$this->day_type = 'MPD';
 				}
 			}
 		} else {
-			$this->day_type = 'SPD';
+			if( date( 'D', $start_time ) == date( 'D', $end_time ) ) {
+				$this->day_type = 'SPD';
+			} else {
+				$this->day_type = 'MPD';
+			}
 		}
 	}
 	
@@ -107,9 +115,7 @@ class GCE_Event {
 			return $this->use_builder();
 		}
 
-		// Setup the markup to return
-		//$display_options = get_option( 'gce_settings_general' );
-		
+		// Setup the markup to return		
 		$display_options['display_start']         = get_post_meta( $this->feed->id, 'gce_display_start', true );
 		$display_options['display_start_text']    = get_post_meta( $this->feed->id, 'gce_display_start_text', true );
 		$display_options['display_end']           = get_post_meta( $this->feed->id, 'gce_display_end', true );
@@ -124,7 +130,7 @@ class GCE_Event {
 		$display_options['display_separator']     = get_post_meta( $this->feed->id, 'gce_display_separator', true );
 		$display_options['display_link_target']   = get_post_meta( $this->feed->id, 'gce_display_link_tab', true );
 		
-		$markup = '<p class="gce-' . $this->type . '-event">' . esc_html( $this->title )  . '</p>';
+		$markup = '<p class="gce-' . esc_attr( $this->type ) . '-event">' . esc_html( $this->title )  . '</p>';
 
 		$start_end = array();
 
@@ -148,7 +154,7 @@ class GCE_Event {
 
 		//Add the correct start / end, date / time information to $markup
 		foreach ( $start_end as $start_or_end => $info ) {
-			$markup .= '<p class="gce-' . $this->type . '-' . $start_or_end . '"><span>' . esc_html( $display_options['display_' . $start_or_end . '_text'] ) . '</span> ';
+			$markup .= '<p class="gce-' . esc_attr( $this->type ) . '-' . $start_or_end . '"><span>' . esc_html( $display_options['display_' . $start_or_end . '_text'] ) . '</span> ';
 			
 			if( ! empty( $display_options['display_' . $start_or_end] ) ) {
 				switch ( $display_options['display_' . $start_or_end] ) {
@@ -169,7 +175,7 @@ class GCE_Event {
 		if ( ! empty( $display_options['display_location'] ) ) {
 			$event_location = $this->location;
 			if ( '' != $event_location )
-				$markup .= '<p class="gce-' . $this->type . '-loc"><span>' . esc_html( $display_options['display_location_text'] ) . '</span> ' . esc_html( $event_location ) . '</p>';
+				$markup .= '<p class="gce-' . esc_attr( $this->type ) . '-loc"><span>' . esc_html( $display_options['display_location_text'] ) . '</span> ' . esc_html( $event_location ) . '</p>';
 		}
 
 		//If description should be displayed (and is not empty) add to $markup
@@ -183,7 +189,7 @@ class GCE_Event {
 					$event_desc = trim( $event_desc[0] );
 				}
 
-				$markup .= '<p class="gce-' . $this->type . '-desc"><span>' . $display_options['display_desc_text'] . '</span> ' . make_clickable( nl2br( esc_html( $event_desc ) ) ) . '</p>';
+				$markup .= '<p class="gce-' . esc_attr( $this->type ) . '-desc"><span>' . esc_html( $display_options['display_desc_text'] ) . '</span> ' . make_clickable( nl2br( esc_html( $event_desc ) ) ) . '</p>';
 			}
 		}
 
@@ -193,9 +199,14 @@ class GCE_Event {
 			
 			$ctz  = get_option( 'timezone_string' );
 			
-			$link = $this->link . ( ! empty( $ctz ) ? '&ctz=' . $ctz : '' );
+			// Check if it is a hangouts link first
+			if( strpos( $this->link, 'plus.google.com/events/' ) !== false ) {
+				$link = $this->link;
+			} else {
+				$link = $this->link . ( ! empty( $ctz ) ? '&ctz=' . $ctz : '' );
+			}
 			
-			$markup .= '<p class="gce-' . $this->type . '-link"><a href="' . esc_url( $link ) . '" ' . $target . '>' . esc_html( $display_options['display_link_text'] ) . '</a></p>';
+			$markup .= '<p class="gce-' . esc_attr( $this->type ) . '-link"><a href="' . esc_url( $link ) . '" ' . esc_attr( $target ) . '>' . esc_html( $display_options['display_link_text'] ) . '</a></p>';
 		}
 
 		return $markup;
@@ -365,7 +376,14 @@ class GCE_Event {
 			case 'link':
 				$new_window = ( $newwindow ) ? ' target="_blank"' : '';
 				$ctz  = get_option( 'timezone_string' );
-				$link = $this->link . ( ! empty( $ctz ) ? '&ctz=' . $ctz : '' );
+				
+				// Check if it is a hangouts link first
+				if( strpos( $this->link, 'plus.google.com/events/' ) !== false ) {
+					$link = $this->link;
+				} else {
+					$link = $this->link . ( ! empty( $ctz ) ? '&ctz=' . $ctz : '' );
+				}
+			
 				return $m[1] . '<a href="' . esc_url( $link ) . '"' . $new_window . '>' . $this->look_for_shortcodes( $m[5] ) . '</a>' . $m[6];
 
 			case 'url':

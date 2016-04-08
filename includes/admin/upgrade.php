@@ -44,12 +44,81 @@ function gce_upgrade() {
 		if( version_compare( $version, '2.1.0', '<' ) ) {
 			gce_v210_upgrade();
 		}
+		
+		if( version_compare( $version, '2.2.0', '<' ) ) {
+			gce_v220_upgrade();
+		}
+		
+		if( version_compare( $version, '2.2.2', '<' ) ) {
+			gce_v222_upgrade();
+		}
 	}
 	
 	$new_version = Google_Calendar_Events::get_instance()->get_plugin_version();
 	update_option( 'gce_version', $new_version );
 	
 	add_option( 'gce_upgrade_has_run', 1 );
+}
+
+function gce_v222_upgrade() {
+	// Need to set the new option for always enqueuing scripts as default enabled for upgrading users
+	$options = get_option( 'gce_settings_general' );
+	
+	if( false !== $options ) {
+		$options['always_enqueue'] = 1;
+		update_option( 'gce_settings_general', $options );
+	}
+}
+
+function gce_v220_upgrade() {
+	// Update feeds
+	$q = new WP_Query( 'post_type=gce_feed' );
+	
+	if( $q->have_posts() ) {
+		while( $q->have_posts() ) {
+			
+			$q->the_post();
+			
+			$gce_list_max_num        = get_post_meta( get_the_ID(), 'gce_list_max_num', true );
+			$gce_list_max_length     = get_post_meta( get_the_ID(), 'gce_list_max_length', true );
+			$gce_feed_start_interval = get_post_meta( get_the_ID(), 'gce_feed_start_interval', true );
+			$gce_feed_start          = get_post_meta( get_the_ID(), 'gce_feed_start', true );
+			$gce_feed_end_interval   = get_post_meta( get_the_ID(), 'gce_feed_end_interval', true );
+			$gce_feed_end            = get_post_meta( get_the_ID(), 'gce_feed_end', true );
+			
+			update_post_meta( get_the_ID(), 'gce_per_page_num', $gce_list_max_num );
+			update_post_meta( get_the_ID(), 'gce_events_per_page', $gce_list_max_length );
+			update_post_meta( get_the_ID(), 'gce_feed_start', $gce_feed_start_interval );
+			update_post_meta( get_the_ID(), 'gce_feed_start_num', $gce_feed_start );
+			update_post_meta( get_the_ID(), 'gce_feed_end', $gce_feed_end_interval );
+			update_post_meta( get_the_ID(), 'gce_feed_end_num', $gce_feed_end );
+			
+			// Add new show tooltips option checked as default
+			update_post_meta( get_the_ID(), 'gce_show_tooltips', 1 );
+			
+		}
+	}
+	
+	wp_reset_postdata();
+	
+
+	// Update widgets for new UI
+	$widget = get_option( 'widget_gce_widget' );
+	
+	if( is_array( $widget ) && ! empty( $widget ) ) {
+		foreach( $widget as $a => $b ) {
+			if( ! is_array( $b ) ) {
+				continue;
+			} 
+
+			foreach( $b as $k => $v ) {
+				$widget[$a]['per_page_num']    = $widget[$a]['list_max_num'];
+				$widget[$a]['events_per_page'] = $widget[$a]['list_max_length'];
+			}
+		}
+		
+		update_option( 'widget_gce_widget', $widget );
+	}
 }
 
 /*

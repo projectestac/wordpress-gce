@@ -18,7 +18,7 @@ class Google_Calendar_Events {
 	 *
 	 * @var     string
 	 */
-	protected $version = '2.1.7';
+	protected $version = '2.2.5';
 
 	/**
 	 * Unique identifier for the plugin.
@@ -37,6 +37,8 @@ class Google_Calendar_Events {
 	 * @var      object
 	 */
 	protected static $instance = null;
+	
+	public $show_scripts = false;
 
 	/**
 	 * Initialize the plugin by setting localization and loading public scripts
@@ -58,15 +60,74 @@ class Google_Calendar_Events {
 			$this->upgrade();
 		}
 		
-		
 		$this->setup_constants();
 		
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_public_scripts' ) );
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_public_styles' ) );
+		add_action( 'init', array( $this, 'enqueue_public_scripts' ) );
+		add_action( 'init', array( $this, 'enqueue_public_styles' ) );
 		
+		
+		// Load scripts when posts load so we know if we need to include them or not
+		add_filter( 'the_posts', array( $this, 'load_scripts' ) );
 		
 		// Load plugin text domain
 		$this->plugin_textdomain();
+		
+		add_action( 'wp_footer', array( $this, 'localize_main_script' ) );
+	}
+	
+	public function localize_main_script() {
+		
+		if( $this->show_scripts ) {
+			global $localize;
+
+			wp_localize_script( GCE_PLUGIN_SLUG . '-public', 'gce_grid', $localize );
+
+			wp_localize_script( GCE_PLUGIN_SLUG . '-public', 'gce', 
+					array(
+						'script_debug'  => ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ),
+						'ajaxurl'     => admin_url( 'admin-ajax.php' ),
+						'loadingText' => __( 'Loading...', 'gce' ),
+					) );
+		}
+	}
+	
+	public function load_scripts( $posts ) {
+		
+		global $gce_options;
+
+		// Init enqueue flag.
+		$do_enqueue = false;
+		
+		if ( isset( $gce_options['always_enqueue'] ) ) {
+
+			$do_enqueue = true;
+
+		} elseif ( ! empty( $posts ) ) {
+
+			foreach ( $posts as $post ) {
+
+				if ( ( strpos( $post->post_content, '[gcal' ) !== false ) || ( $post->post_type == 'gce_feed' ) ) {
+
+					$do_enqueue = true;
+					break;
+				}
+			}
+		}
+
+		if ( true == $do_enqueue ) {
+
+			// Load CSS after checking to see if it is supposed to be disabled or not (based on settings)
+			if( ! isset( $gce_options['disable_css'] ) ) {
+				wp_enqueue_style( $this->plugin_slug . '-public' );
+			}
+
+			// Load JS
+			wp_enqueue_script( $this->plugin_slug . '-public' );
+
+			$this->show_scripts = true;
+		}
+
+		return $posts;
 	}
 	
 	/**
@@ -74,7 +135,7 @@ class Google_Calendar_Events {
 	 * 
 	 * @since 2.0.0
 	 */
-	private function upgrade() {
+	public function upgrade() {
 		include_once( 'includes/admin/upgrade.php' );
 	}
 	
@@ -104,11 +165,10 @@ class Google_Calendar_Events {
 		// First include common files between admin and public
 		include_once( 'includes/misc-functions.php' );
 		include_once( 'includes/gce-feed-cpt.php' );
-		include_once( 'includes/class-gce-feed.php' );
-		include_once( 'includes/class-gce-event.php' );
-		include_once( 'includes/shortcodes.php' );
 		include_once( 'includes/class-gce-display.php' );
-		
+		include_once( 'includes/class-gce-event.php' );
+		include_once( 'includes/class-gce-feed.php' );
+		include_once( 'includes/shortcodes.php' );
 		include_once( 'views/widgets.php' );
 		
 		// Now include files specifically for public or admin
@@ -143,8 +203,8 @@ class Google_Calendar_Events {
 	 * @since 2.0.0
 	 */
 	public function enqueue_public_styles() {
-		wp_enqueue_style( $this->plugin_slug . '-qtip', plugins_url( 'css/jquery.qtip.min.css', __FILE__ ), array(), $this->version );
-		wp_enqueue_style( $this->plugin_slug . '-public', plugins_url( 'css/gce-style.css', __FILE__ ), array( $this->plugin_slug . '-qtip' ), $this->version );
+		wp_register_style( $this->plugin_slug . '-qtip', plugins_url( 'css/jquery.qtip.min.css', __FILE__ ), array(), $this->version );
+		wp_register_style( $this->plugin_slug . '-public', plugins_url( 'css/gce-style.css', __FILE__ ), array( $this->plugin_slug . '-qtip' ), $this->version );
 	}
 
 	/**
