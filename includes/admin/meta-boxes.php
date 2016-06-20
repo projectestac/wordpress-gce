@@ -90,6 +90,10 @@ class Meta_Boxes {
 		$addons = apply_filters( 'simcal_installed_addons', array() );
 		if ( empty( $addons ) ) {
 
+// XTEC ************ AFEGIT - Removed add-ons advertisements for admins
+// 2016.06.20 @sarjona
+if (is_xtec_super_admin()) {
+//************ FI
 			// Premium add-on feature list and upsell.
 			add_meta_box(
 				'simcal-upgrade',
@@ -99,6 +103,10 @@ class Meta_Boxes {
 				'side',
 				'default'
 			);
+// XTEC ************ AFEGIT - Removed add-ons advertisements for admins
+// 2016.06.20 @sarjona
+}
+//************ FI
 
 			// Removing coupon code + mailing list sign-up for now. 9/26/16
 			/*
