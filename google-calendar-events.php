@@ -1,67 +1,61 @@
 <?php
 /**
- * Google Calendar Events
+ * Plugin Name: Simple Calendar
+ * Plugin URI:  https://simplecalendar.io
+ * Description: Add Google Calendar events to your WordPress site in minutes. Beautiful calendar displays. Fully responsive.
+ * Author:      Moonstone Media
+ * Author URI:  https://simplecalendar.io
+ * Version:     3.1.1
+ * Text Domain: google-calendar-events
+ * Domain Path: /i18n
  *
- * @package         GCE
- * @author          Phil Derksen <pderksen@gmail.com>, Nick Young <mycorpweb@gmail.com>
- * @license         GPL-2.0+
- * @link            http://philderksen.com
- * @copyright       2014-2015 Phil Derksen
- *
- * @wordpress-plugin
- * Plugin Name:     Google Calendar Events
- * Plugin URI:      https://github.com/pderksen/WP-Google-Calendar-Events
- * Description:     Show off your Google calendar in grid (month) or list view, in a post, page or widget, and in a style that matches your site.
- * Version:         2.2.5
- * Author:          Phil Derksen
- * Author URI:      http://philderksen.com
- * License:         GPL-2.0+
- * License URI:     http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:     gce
- * Domain Path:     /languages
+ * @copyright   2015-2016 Moonstone Media/Phil Derksen. All rights reserved.
  */
 
-// If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
-	die();
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
-/*
- * Include the main plugin file
- *
- * @since 2.0.0
- */
-require_once( 'class-google-calendar-events.php' );
-
-/**
- * Define constant pointing to this file
- * 
- * @since 2.0.0
- */
-if( ! defined( 'GCE_MAIN_FILE' ) ) {
-	define( 'GCE_MAIN_FILE', __FILE__ );
+// Plugin constants.
+$this_plugin_path      = trailingslashit( dirname( __FILE__ ) );
+$this_plugin_dir       = plugin_dir_url( __FILE__ );
+$this_plugin_constants = array(
+	'SIMPLE_CALENDAR_VERSION'   => '3.1.1',
+	'SIMPLE_CALENDAR_MAIN_FILE' => __FILE__,
+	'SIMPLE_CALENDAR_URL'       => $this_plugin_dir,
+	'SIMPLE_CALENDAR_ASSETS'    => $this_plugin_dir . 'assets/',
+	'SIMPLE_CALENDAR_PATH'      => $this_plugin_path,
+	'SIMPLE_CALENDAR_INC'       => $this_plugin_path . 'includes/',
+);
+foreach ( $this_plugin_constants as $constant => $value ) {
+	if ( ! defined( $constant ) ) {
+		define( $constant, $value );
+	}
 }
 
-/*
- * Get instance of our plugin
- * 
- * @since 2.0.0
- */
-add_action( 'plugins_loaded', array( 'Google_Calendar_Events', 'get_instance' ) );
+// Plugin requirements
 
-/*
- * If we are in admin then load the Admin class
- * 
- * @since 2.0.0
- */
-if ( is_admin() && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) ) {
-	require_once( 'class-google-calendar-events-admin.php' );
-	
-	// Register hooks that are fired when the plugin is activated, deactivated, and uninstalled, respectively.
-	register_activation_hook( __FILE__, array( 'Google_Calendar_Events_Admin', 'activate' ) );
-	
-	// Get plugin admin class instance
-	add_action( 'plugins_loaded', array( 'Google_Calendar_Events_Admin', 'get_instance' ) );
+include_once 'includes/wp-requirements.php';
+
+// Check plugin requirements before loading plugin.
+$this_plugin_checks = new SimCal_WP_Requirements( 'Simple Calendar', plugin_basename( __FILE__ ), array(
+		'PHP'        => '5.3.3',
+		'WordPress'  => '4.1',
+		'Extensions' => array(
+			'curl',
+			'iconv',
+			'json',
+			'mbstring',
+		),
+	) );
+if ( $this_plugin_checks->pass() === false ) {
+	$this_plugin_checks->halt();
+
+	return;
 }
 
+include_once 'vendor/autoload.php';
 
+// Load plugin.
+include_once 'includes/main.php';
