@@ -81,6 +81,10 @@ class Google_Admin {
 	 * @return array
 	 */
 	public function settings_fields() {
+// XTEC ************ AFEGIT - Hidden Google Calendar Pro reference for admins
+// 2016.06.20 @sarjona
+if (is_xtec_super_admin()) {
+//************ FI
 		return array(
 			'name' => $this->feed->name,
 			'description' => __( "To read events from your public Google Calendars you'll need create a Google API key and save it here.", 'google-calendar-events' ) .
@@ -100,6 +104,27 @@ class Google_Admin {
 				),
 			),
 		);
+
+// XTEC ************ AFEGIT - Hidden Google Calendar Pro reference for admins
+// 2016.06.20 @sarjona
+} else {
+		return array(
+			'name' => $this->feed->name,
+			'description' => __( "To read events from your public Google Calendars you'll need create a Google API key and save it here.", 'google-calendar-events' ) .
+			                 '<br/><br/>',
+			'fields' => array(
+				'api_key' => array(
+					'type'       => 'standard',
+					'subtype'    => 'text',
+					'class'      => array( 'simcal-wide-text regular-text', 'ltr' ),
+					'title'      => __( 'Google API Key', 'google-calendar-events' ),
+					'validation' => array( $this, 'check_google_api_key' ),
+				),
+			),
+		);
+}
+//************ FI
+
 	}
 
 	/**
