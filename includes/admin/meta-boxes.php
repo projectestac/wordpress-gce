@@ -88,6 +88,10 @@ class Meta_Boxes {
 		$addons = apply_filters( 'simcal_installed_addons', array() );
 		if ( empty( $addons ) ) {
 
+// XTEC ************ AFEGIT - Removed add-ons advertisements for admins
+// 2016.06.20 @sarjona
+if (is_xtec_super_admin()) {
+//************ FI
 			add_meta_box(
 				'simcal-newsletter',
 				__( 'Get 20% off all Pro Add-ons', 'google-calendar-events' ),
@@ -96,6 +100,10 @@ class Meta_Boxes {
 				'side',
 				'default'
 			);
+// XTEC ************ AFEGIT - Removed add-ons advertisements for admins
+// 2016.06.20 @sarjona
+}
+//************ FI
 
 		}
 
