@@ -109,12 +109,29 @@ class Default_Calendar_Admin {
 					?>
 				</td>
 			</tr>
+<!--// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona -->
+<?php
+$trim = get_post_meta( $post_id, '_default_calendar_trim_titles', true );
+if ( ! is_xtec_super_admin() ) {
+?>
+	<input type="hidden" name="_default_calendar_trim_titles" value="<?php 'yes' == $trim ? 'yes' : 'no'?>" />
+	<input type="hidden" name="_default_calendar_trim_titles_chars" value="<?php 'yes' == $trim ? strval( max( absint( get_post_meta( $post_id, '_default_calendar_trim_titles_chars', true ) ), 1 ) ) : '20'?>" />
+<?php
+} else {
+?>
+<!--//************ FI-->
 			<tr class="simcal-panel-field simcal-default-calendar-grid" style="display: none;">
 				<th><label for="_default_calendar_trim_titles"><?php _e( 'Trim Event Titles', 'google-calendar-events' ); ?></label></th>
 				<td>
 					<?php
 
+// XTEC ************ ELIMINAT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona
+/*
 					$trim = get_post_meta( $post_id, '_default_calendar_trim_titles', true );
+*/
+//************ FI
 
 					simcal_print_field( array(
 						'type'        => 'checkbox',
@@ -147,6 +164,12 @@ class Default_Calendar_Admin {
 					?>
 				</td>
 			</tr>
+<!--// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona -->
+<?php
+}
+?>
+<!--//************ FI-->
 			<tr class="simcal-panel-field simcal-default-calendar-list" style="display: none;">
 				<th><label for="_default_calendar_list_grouped_span"><?php _e( 'Span', 'google-calendar-events' ); ?></label></th>
 				<td>
@@ -268,6 +291,12 @@ class Default_Calendar_Admin {
 					?>
 				</td>
 			</tr>
+<!--// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona -->
+<?php
+if ( is_xtec_super_admin() ) {
+?>
+<!--//************ FI-->
 			<tr class="simcal-panel-field simcal-default-calendar-grid simcal-default-calendar-list" style="display: none;">
 				<th><label for="_default_calendar_event_bubbles_action"><?php _e( 'Expand Multi-day Events', 'google-calendar-events' ); ?></label></th>
 				<td>
@@ -374,6 +403,12 @@ class Default_Calendar_Admin {
 					?>
 				</td>
 			</tr>
+<!--// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona -->
+<?php
+}
+?>
+<!--//************ FI-->
 
 			</tbody>
 			<?php
