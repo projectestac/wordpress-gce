@@ -60,6 +60,22 @@ class Google_Admin {
 
 		$this->feed = $feed;
 		$this->google_api_key = $google_api_key;
+
+// XTEC ************ AFEGIT - Choose the appropriate API key
+// 2014.10.08 @aginard
+// 2016.06.21 @sarjona
+		// Behaviour is as follows: First look for an API key in the database. If it is empty,
+		// check if it must use the Agora API key or the XTECBlocs API key.
+		if ( empty( $this->google_api_key ) ) {
+            if ( is_agora() ) {
+            	global $agora;
+                $this->google_api_key = $agora['google_api_key']; // API key for Agora
+            } else if ( is_xtecblocs() ) {
+                $this->google_api_key = WP_GOOGLE_API_KEY; // API key for XTECBlocs
+            }
+        }
+//************ FI
+
 		$this->google_calendar_id = $google_calendar_id;
 
 		$screen = simcal_is_admin_screen();
