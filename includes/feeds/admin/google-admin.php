@@ -262,6 +262,13 @@ if (is_xtec_super_admin()) {
 				),
 			),
 		);
+// XTEC ************ AFEGIT - Hidden Add-ons menu option for admins
+// 2016.06.20 @sarjona
+if ( ! is_xtec_super_admin() ) {
+	unset($inputs[$this->feed->type]['_google_events_search_query']);
+	unset($inputs[$this->feed->type]['_google_events_max_results']);
+}
+//************ FI
 
 		?>
 		<div id="google-settings-panel" class="simcal-panel">
