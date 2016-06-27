@@ -255,10 +255,20 @@ class Default_Calendar_Grid implements Calendar_View {
 						for ( $i = $week_starts; $i <= 6; $i ++ ) :
 
 							?>
+<!--// XTEC ************ MODIFICAT - Change short week-day (to avoid show all "d" in Catalan)
+// 2016.06.27 @sarjona -->
+							<th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
+								data-screen-small="<?php echo $week_days_short[ $i ]; ?>"
+							    data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
+							    data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+<!--//************ ORIGINAL -->
+<!--
 							<th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
 								data-screen-small="<?php echo mb_substr( $week_days_short[ $i ], 0, 1, 'UTF-8' ); ?>"
 							    data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
 							    data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+-->
+<!--//************ FI -->
 							<?php
 
 						endfor;
@@ -267,10 +277,20 @@ class Default_Calendar_Grid implements Calendar_View {
 							for ( $i = 0; $i < $week_starts; $i ++ ) :
 
 								?>
+<!--// XTEC ************ MODIFICAT - Change short week-day (to avoid show all "d" in Catalan)
+// 2016.06.27 @sarjona -->
+								<th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
+								    data-screen-small="<?php echo $week_days_short[ $i ]; ?>"
+								    data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
+								    data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+<!--//************ ORIGINAL -->
+<!--
 								<th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
 								    data-screen-small="<?php echo mb_substr( $week_days_short[ $i ], 0, 1, 'UTF-8' ); ?>"
 								    data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
 								    data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+-->
+<!--//************ FI -->
 								<?php
 
 							endfor;
