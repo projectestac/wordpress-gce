@@ -112,13 +112,7 @@ class Default_Calendar_Admin {
 <!--// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
 // 2016.06.21 @sarjona -->
 <?php
-$trim = get_post_meta( $post_id, '_default_calendar_trim_titles', true );
-if ( ! is_xtec_super_admin() ) {
-?>
-	<input type="hidden" name="_default_calendar_trim_titles" value="<?php 'yes' == $trim ? 'yes' : 'no'?>" />
-	<input type="hidden" name="_default_calendar_trim_titles_chars" value="<?php 'yes' == $trim ? strval( max( absint( get_post_meta( $post_id, '_default_calendar_trim_titles_chars', true ) ), 1 ) ) : '20'?>" />
-<?php
-} else {
+if ( is_xtec_super_admin() ) {
 ?>
 <!--//************ FI-->
 			<tr class="simcal-panel-field simcal-default-calendar-grid" style="display: none;">
@@ -126,12 +120,7 @@ if ( ! is_xtec_super_admin() ) {
 				<td>
 					<?php
 
-// XTEC ************ ELIMINAT - Hidden some calendar form fields for admins
-// 2016.06.21 @sarjona
-/*
 					$trim = get_post_meta( $post_id, '_default_calendar_trim_titles', true );
-*/
-//************ FI
 
 					simcal_print_field( array(
 						'type'        => 'checkbox',
