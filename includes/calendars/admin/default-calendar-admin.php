@@ -421,7 +421,14 @@ if ( is_xtec_super_admin() ) {
 		update_post_meta( $post_id, '_default_calendar_style_theme', $theme );
 
 		// Today color.
+// XTEC ************ MODIFICAT - Fixed bug with today_color format
+// 2016.07.01 @sarjona
+		$today_color = isset( $_POST['_default_calendar_style_today'] ) ? sanitize_text_field( $_POST['_default_calendar_style_today'] ) : '#FF0000';
+//************ ORIGINAL
+/*
 		$today_color = isset( $_POST['_default_calendar_style_today'] ) ? sanitize_text_field( $_POST['_default_calendar_style_today'] ) : '#FF000';
+*/
+//************ FI
 		update_post_meta( $post_id, '_default_calendar_style_today', $today_color );
 
 		// Days with events color.
