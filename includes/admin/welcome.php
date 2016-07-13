@@ -216,6 +216,10 @@ class Welcome {
 		$welcome_image_about_path = SIMPLE_CALENDAR_ASSETS . '/images/welcome';
 		$welcome_addons_link = simcal_ga_campaign_url( simcal_get_url( 'addons' ), 'core-plugin', 'welcome-page' );
 
+// XTEC ************ AFEGIT - Hidden welcome page wp-admin/index.php?page=simple-calendar_about&simcal_install=update
+// 2016.07.13 @sarjona
+		if (is_xtec_super_admin()) {
+//************ FI
 		?>
 		<div id="simcal-welcome">
 			<div class="wrap about-wrap whats-new-wrap">
@@ -244,6 +248,22 @@ class Welcome {
 			</div>
 		</div>
 		<?php
+// XTEC ************ AFEGIT - Hidden welcome page wp-admin/index.php?page=simple-calendar_about&simcal_install=update
+// 2016.07.13 @sarjona
+		} else {
+		?>
+			<div id="simcal-welcome">
+				<h1>
+					<?php
+					/* translators: %s prints the current version of the plugin. */
+					printf( __( 'Welcome to Simple Calendar %s', 'google-calendar-events' ), SIMPLE_CALENDAR_VERSION );
+					?>
+				</h1>
+				<div class="simcal-badge">&nbsp;</div>
+			</div>
+		<?php
+		}
+//************ FI
 
 	}
 
@@ -254,6 +274,10 @@ class Welcome {
 	 */
 	public function credits_screen() {
 
+// XTEC ************ AFEGIT - Hidden welcome page wp-admin/index.php?page=simple-calendar_about&simcal_install=update
+// 2016.07.13 @sarjona
+		if (is_xtec_super_admin()) {
+//************ FI
 		?>
 		<div id="simcal-welcome">
 			<div class="wrap about-wrap credits-wrap">
@@ -272,6 +296,22 @@ class Welcome {
 			</div>
 		</div>
 		<?php
+// XTEC ************ AFEGIT - Hidden welcome page wp-admin/index.php?page=simple-calendar_about&simcal_install=update
+// 2016.07.13 @sarjona
+		} else {
+		?>
+			<div id="simcal-welcome">
+				<h1>
+					<?php
+					/* translators: %s prints the current version of the plugin. */
+					printf( __( 'Welcome to Simple Calendar %s', 'google-calendar-events' ), SIMPLE_CALENDAR_VERSION );
+					?>
+				</h1>
+				<div class="simcal-badge">&nbsp;</div>
+			</div>
+		<?php
+		}
+//************ FI
 
 	}
 
@@ -282,6 +322,10 @@ class Welcome {
 	 */
 	public function translators_screen() {
 
+// XTEC ************ AFEGIT - Hidden welcome page wp-admin/index.php?page=simple-calendar_about&simcal_install=update
+// 2016.07.13 @sarjona
+		if (is_xtec_super_admin()) {
+//************ FI
 		?>
 		<div id="simcal-welcome">
 			<div class="wrap about-wrap translators-wrap">
@@ -305,6 +349,22 @@ class Welcome {
 			</div>
 		</div>
 		<?php
+// XTEC ************ AFEGIT - Hidden welcome page wp-admin/index.php?page=simple-calendar_about&simcal_install=update
+// 2016.07.13 @sarjona
+		} else {
+		?>
+			<div id="simcal-welcome">
+				<h1>
+					<?php
+					/* translators: %s prints the current version of the plugin. */
+					printf( __( 'Welcome to Simple Calendar %s', 'google-calendar-events' ), SIMPLE_CALENDAR_VERSION );
+					?>
+				</h1>
+				<div class="simcal-badge">&nbsp;</div>
+			</div>
+		<?php
+		}
+//************ FI
 
 	}
 
