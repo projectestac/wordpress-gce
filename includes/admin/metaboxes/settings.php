@@ -790,8 +790,16 @@ if ( is_xtec_super_admin() ) {
 			$cache_freq = esc_attr( get_post_meta( $post->ID, '_feed_cache_user_amount', true ) );
 			$cache_unit = esc_attr( get_post_meta( $post->ID, '_feed_cache_user_unit', true ) );
 
+// XTEC ************ MODIFICAT - Set default cache value to 5 minutes
+// 2016.09.07 @aginard
+			$cache_freq = intval( $cache_freq ) && $cache_freq >= 0 ? $cache_freq : 5;
+			$cache_unit = $cache_unit ? $cache_unit : '60';
+//************ ORIGINAL
+/*
 			$cache_freq = intval( $cache_freq ) && $cache_freq >= 0 ? $cache_freq : 2;
 			$cache_unit = $cache_unit ? $cache_unit : '3600';
+*/
+//************ FI
 
 			?>
 			<tr class="simcal-panel-field">
