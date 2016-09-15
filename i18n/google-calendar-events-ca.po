@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the Stable (latest release) package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2016-07-15 12:11+0200\n"
+"PO-Revision-Date: 2016-09-15 12:16+0200\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1105,7 +1105,7 @@ msgstr "Setmana(es) abans de la data d'inici"
 
 #: includes/admin/metaboxes/settings.php:383
 msgid "Month(s) before start date"
-msgstr "Mes(os) després de la data d'inici"
+msgstr "Mes(os) abans de la data d'inici"
 
 #: includes/admin/metaboxes/settings.php:384
 msgid "Year(s) before start date"
@@ -1125,7 +1125,7 @@ msgstr "Al final del dia de la data d'inici"
 
 #: includes/admin/metaboxes/settings.php:419
 msgid "Day(s) after start date"
-msgstr "Dia(es) abans d'avui"
+msgstr "Dia(es) després d'avui"
 
 #: includes/admin/metaboxes/settings.php:420
 msgid "Weeks(s) after start date"
