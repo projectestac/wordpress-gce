@@ -203,6 +203,16 @@ function simcal_get_calendars( $exclude = '', $cached = true ) {
 		}
 	}
 
+	//XTEC ************ AFEGIT ­ Exclude grouped calendars
+	//2016.23.09 @xaviernietosanchez
+	foreach ($calendars as $key => $value) {
+		$meta_calendarGrouped = get_post_meta($key,'_grouped_calendars_ids');
+		if( $meta_calendarGrouped[0] != '' ){
+			unset($calendars[$key]);
+		}
+	}
+	//************ FI
+
 	return $calendars;
 }
 
