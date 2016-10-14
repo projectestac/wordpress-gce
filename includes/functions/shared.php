@@ -175,7 +175,15 @@ function simcal_common_scripts_variables() {
  *
  * @return array Associative array with ids as keys and feed titles as values.
  */
+
+// XTEC ************ MODIFICAT - Check call is to widget or calendar edit
+// 2016.14.10 @xaviernietosanchez
+function simcal_get_calendars( $exclude = '', $cached = true, $widget = false ) {
+// ************ ORIGINAL
+/*
 function simcal_get_calendars( $exclude = '', $cached = true ) {
+*/
+// ************ FI
 
 	$calendars = get_transient( '_simple-calendar_feed_ids' );
 
@@ -203,15 +211,17 @@ function simcal_get_calendars( $exclude = '', $cached = true ) {
 		}
 	}
 
-	//XTEC ************ AFEGIT ­ Exclude grouped calendars
-	//2016.23.09 @xaviernietosanchez
-	foreach ($calendars as $key => $value) {
-		$meta_calendarGrouped = get_post_meta($key,'_grouped_calendars_ids');
-		if( $meta_calendarGrouped[0] != '' ){
-			unset($calendars[$key]);
+	// XTEC ************ AFEGIT ­ Exclude grouped calendars, only for edit grouped calendars.
+	// 2016.14.10 @xaviernietosanchez
+	if( $widget === false ){
+		foreach ($calendars as $key => $value) {
+			$meta_calendarGrouped = get_post_meta($key,'_grouped_calendars_ids');
+			if( $meta_calendarGrouped[0] != '' ){
+				unset($calendars[$key]);
+			}
 		}
 	}
-	//************ FI
+	// ************ FI
 
 	return $calendars;
 }

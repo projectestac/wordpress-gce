@@ -55,7 +55,14 @@ class Calendar extends \WP_Widget implements Widget {
 
 		if ( is_admin() ) {
 			if ( ! defined( 'DOING_AJAX' ) ) {
+				// XTEC ************ MODIFICAT - Change call from widget
+				// 2016.14.10 @xaviernietosanchez
+				$this->calendars = simcal_get_calendars('',true,true);
+				// ************ ORIGINAL
+				/*
 				$this->calendars = simcal_get_calendars();
+				*/
+				// ************ FI
 			} else {
 				$this->calendars = get_transient( '_simple-calendar_feed_ids' );
 			}
