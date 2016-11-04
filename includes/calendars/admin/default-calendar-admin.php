@@ -280,12 +280,6 @@ if ( is_xtec_super_admin() ) {
 					?>
 				</td>
 			</tr>
-<!--// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
-// 2016.06.21 @sarjona -->
-<?php
-if ( is_xtec_super_admin() ) {
-?>
-<!--//************ FI-->
 			<tr class="simcal-panel-field simcal-default-calendar-grid simcal-default-calendar-list" style="display: none;">
 				<th><label for="_default_calendar_event_bubbles_action"><?php _e( 'Expand Multi-day Events', 'google-calendar-events' ); ?></label></th>
 				<td>
@@ -319,6 +313,12 @@ if ( is_xtec_super_admin() ) {
 				</td>
 			</tr>
 			</tbody>
+<!--// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona -->
+<?php
+if ( is_xtec_super_admin() ) {
+?>
+<!--//************ FI-->
 			<?php
 
 			// TODO Defaults repeated here and in process_meta(). Need to consolidate at some point.
