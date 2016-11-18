@@ -577,6 +577,36 @@ class Default_Calendar_Grid implements Calendar_View {
 		echo "\t" . '</tr>' . "\n";
 		echo '</tbody>' . "\n";
 
+// XTEC ************ AFEGIT ­- Show event information on mouse over
+// 2016.11.18 @fbusquets - https://github.com/projectestac/agora_nodes/issues/485
+		echo "<script type=\"text/javascript\">
+jQuery(
+  // Handle only events originated on '.simcal-event-dots' (cells with dots)
+  jQuery('.simcal-calendar').on('mouseenter', '.simcal-events-dots', function(){
+
+    // Save the cell that originated the mouse event (assigned to 'this' by jQuery)
+    // for future reference
+    var that = this;
+
+    // Set a timeout handler that will trigger a 'click' on the cell
+    var timeoutId = setTimeout(function(){
+      jQuery(that).removeData('simcalTimeoutId');
+      jQuery(that).trigger('click');
+    }, 500);
+
+    // Save 'timeoutId' for future reference
+    jQuery(this).data('simcalTimeoutId', timeoutId);
+
+  }).on('mouseleave', '.simcal-events-dots', function(){
+    // Clear timeout and remove reference
+    var timeoutId = jQuery(this).data('simcalTimeoutId');
+    if(timeoutId) {
+      clearTimeout(timeoutId);
+      jQuery(this).removeData('simcalTimeoutId');
+    }
+  })
+);</script>";
+//************ FI
 		return ob_get_clean();
 	}
 
