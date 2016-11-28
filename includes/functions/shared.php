@@ -228,7 +228,7 @@ function simcal_get_calendars( $exclude = '', $cached = true ) {
 		// Exclude grouped calendars
 		foreach ($calendars as $key => $value) {
 			$meta_calendarGrouped = get_post_meta($key,'_grouped_calendars_ids');
-			if( $meta_calendarGrouped[0] != '' ){
+			if( isset($meta_calendarGrouped[0]) != '' ){
 				unset($calendars[$key]);
 			}
 		}
