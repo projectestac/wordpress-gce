@@ -220,7 +220,14 @@ class Assets {
 					$in_footer  = isset( $v['in_footer'] ) ? $v['in_footer'] : false;
 					$deps       = isset( $v['deps'] ) ? $v['deps'] : array();
 
+					// XTEC ************ MODIFICAT - Add jQuery dependency
+					// 2017.01.10 @xaviernietosanchez
+					wp_enqueue_script( $script, $src, array('jquery'), SIMPLE_CALENDAR_VERSION, $in_footer );
+					// ************ ORIGINAL
+					/*
 					wp_enqueue_script( $script, $src, $deps, SIMPLE_CALENDAR_VERSION, $in_footer );
+					*/
+					// ************ FI
 
 					if ( ! empty( $v['localize'] ) && is_array( $v['localize'] ) ) {
 						foreach ( $v['localize'] as $object => $l10n ) {
