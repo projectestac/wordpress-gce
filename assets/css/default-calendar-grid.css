@@ -353,8 +353,13 @@
   display: block;
   min-height: 32px; }
 
+/* XTEC ************ ELIMINAT - Hidden hover effect to simple calendar. Is necessary change the min.css manually */
+/* 2017.03.03 @xaviernietosanchez */
+/*
 .simcal-default-calendar-grid.simcal-default-calendar-light .simcal-day:hover {
   background-color: rgba(0, 0, 0, 0.1); }
+*/
+/* ************ FI */
 
 .simcal-default-calendar-grid.simcal-default-calendar-light .simcal-day-void {
   background-color: rgba(0, 0, 0, 0.04); }
@@ -421,3 +426,4 @@
   .simcal-event-bubble .simcal-event-details p,
   .simcal-event-bubble .simcal-event-details .simcal-event-description {
     margin: 0 0 1em; }
+
