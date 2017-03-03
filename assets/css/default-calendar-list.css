@@ -343,10 +343,29 @@
   .simcal-default-calendar-list dt.simcal-day-label {
     font-size: .9em;
     list-style: none;
+
+    /* XTEC ************ MODIFICAT - Customize list calendar. Is necessary change the min.css manually */
+    /* 2017.03.06 @xaviernietosanchez */
+    margin: 10px 0 10px; }
+    /* ************ ORIGINAL */
+    /*
     margin: 20px 0 10px; }
+    */
+    /* ************ FI */
+
     .simcal-default-calendar-list dt.simcal-day-label > span {
       display: inline-block;
+
+      /* XTEC ************ MODIFICAT - Customize list calendar. Is necessary change the min.css manually */
+      /* 2017.03.06 @xaviernietosanchez */
+      padding: 0px 4px; }
+      /* ************ ORIGINAL */
+      /*
       padding: 4px 8px; }
+      */
+      /* ************ FI */
+
+
   .simcal-default-calendar-list ul.simcal-events {
     margin: 10px 14px 0; }
     .simcal-default-calendar-list ul.simcal-events li.simcal-event {
@@ -359,7 +378,16 @@
     overflow: hidden; }
     .simcal-default-calendar-list .simcal-event-details p,
     .simcal-default-calendar-list .simcal-event-details .simcal-event-description {
+
+    /* XTEC ************ MODIFICAT - Customize list calendar. Is necessary change the min.css manually */
+    /* 2017.03.06 @xaviernietosanchez */
+      margin: 0; }
+    /* ************ ORIGINAL */
+    /*
       margin: 0 0 1em; }
+    */
+    /* ************ FI */
+
   .simcal-default-calendar-list .simcal-events-toggle {
     display: inline-block;
     padding: 0; }
