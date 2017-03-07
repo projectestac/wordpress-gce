@@ -88,7 +88,23 @@ class Calendar extends \WP_Widget implements Widget {
 
 		$id = isset( $instance['calendar_id'] ) ? absint( $instance['calendar_id'] ) : 0;
 		if ( $id > 0 ) {
+
+			// XTEC ************ AFEGIT - Check if is a private calendar or protected with password
+			// 2017.03.07 @xaviernietosanchez
+			if ( get_post_status( $id ) !== 'private' ){
+				if ( post_password_required( $id ) ){
+					echo get_the_password_form( $id );
+				} else {
+			// ************ FI
+
 			simcal_print_calendar( $id );
+
+			// XTEC ************ AFEGIT - Check if is a private calendar or protected with password
+			// 2017.03.07 @xaviernietosanchez
+			 	}
+			}
+			// ************ FI
+
 		}
 
 		echo $args['after_widget'];
