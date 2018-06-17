@@ -284,8 +284,13 @@ abstract class Calendar {
 
 			// Set earliest and latest event timestamps.
 			if ( $this->events && is_array( $this->events ) ) {
-				$this->earliest_event = intval( current( array_keys( $this->events ) ) );
-				$this->latest_event   = intval( key( array_slice( $this->events, -1, 1, true ) ) );
+				$start_event          = current( $this->events );
+				$start_event_item     = ! empty( $start_event[0]->start ) ? $start_event[0]->start : 0;
+				$this->earliest_event = intval( $start_event_item );
+
+				$last_event         = current( array_slice( $this->events, - 1, 1, true ) );
+				$last_event_item    = ! empty( $last_event[0]->end ) ? $last_event[0]->end : 0;
+				$this->latest_event = intval( $last_event_item );
 			}
 
 			// Set calendar end.
@@ -432,6 +437,12 @@ abstract class Calendar {
 			}
 		}
 
+		// Sort by end date so that navigation buttons are displayed
+		// correctly for events spanning multiple days.
+		uasort( $events, function( $a, $b ) {
+			return ( $a[0]->end - $b[0]->end );
+		} );
+
 		$this->events = $events;
 	}
 
@@ -574,7 +585,13 @@ abstract class Calendar {
 			$separator = get_post_meta( $this->id, '_calendar_datetime_separator', true );
 		}
 
-		$this->datetime_separator = esc_attr( $separator );
+		$separator_spacing = get_post_meta( $this->id, '_calendar_datetime_separator_spacing', true );
+		if ( empty( $separator_spacing ) ) {
+			$separator = '&nbsp;' . trim( $separator ) . '&nbsp;';
+		} else {
+			$separator = str_replace( ' ', '&nbsp;', $separator );
+		}
+		$this->datetime_separator = esc_html( $separator );
 	}
 
 	/**
