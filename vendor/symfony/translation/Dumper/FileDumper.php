@@ -13,6 +13,7 @@ namespace Symfony\Component\Translation\Dumper;
 
 use Symfony\Component\Translation\MessageCatalogue;
 use Symfony\Component\Translation\Exception\InvalidArgumentException;
+use Symfony\Component\Translation\Exception\RuntimeException;
 
 /**
  * FileDumper is an implementation of DumperInterface that dump a message catalogue to file(s).
@@ -74,7 +75,7 @@ abstract class FileDumper implements DumperInterface
             $fullpath = $options['path'].'/'.$this->getRelativePath($domain, $messages->getLocale());
             if (file_exists($fullpath)) {
                 if ($this->backup) {
-                    @trigger_error('Creating a backup while dumping a message catalogue is deprecated since version 3.1 and will be removed in 4.0. Use TranslationWriter::disableBackup() to disable the backup.', E_USER_DEPRECATED);
+                    @trigger_error('Creating a backup while dumping a message catalogue is deprecated since Symfony 3.1 and will be removed in 4.0. Use TranslationWriter::disableBackup() to disable the backup.', E_USER_DEPRECATED);
                     copy($fullpath, $fullpath.'~');
                 }
             } else {

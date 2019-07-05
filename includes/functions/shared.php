@@ -224,11 +224,12 @@ function simcal_get_calendars( $exclude = '', $cached = true ) {
 
 	// XTEC ************ AFEGIT ­ To exclude grouped calendars when specified with the $includegrouped param
 	// 2016.14.10 @xaviernietosanchez
+    // 2019.11.04 @nacho
 	if( $includegrouped === false ) {
 		// Exclude grouped calendars
 		foreach ($calendars as $key => $value) {
 			$meta_calendarGrouped = get_post_meta($key,'_grouped_calendars_ids');
-			if( $meta_calendarGrouped[0] != '' ){
+			if( isset($meta_calendarGrouped) ){
 				unset($calendars[$key]);
 			}
 		}

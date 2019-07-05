@@ -172,7 +172,7 @@ class Default_Calendar extends Calendar {
 // XTEC ************ AFEGIT - Changed default color for Agora-Nodes
 // 2016.06.21 @sarjona
 		if ( is_agora() ) {
-			global $colors_nodes;
+		    global $colors_nodes;
 		    $paleta = reactor_option('paleta_colors','blaus');
 		    $this->today_color = $colors_nodes[$paleta]['primary'];
 		    $this->days_events_color = isset($colors_nodes[$paleta]["calendar"])?$colors_nodes[$paleta]["calendar"]:$colors_nodes[$paleta]['secondary'];
