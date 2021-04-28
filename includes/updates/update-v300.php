@@ -356,7 +356,16 @@ UPDATE {$table} SET `post_type`='calendar' WHERE `post_type`='gce_feed';
 					$id = absint( substr( $old_widget['id'], 0, strspn( $old_widget['id'], '0123456789' ) ) );
 
 					if ( $id > 0 ) {
+
+// XTEC ************ MODIFICAT - Don't add the title "Simple Calendar" to the widgets during upgrade
+// 2016.09.07 @aginard
+						$new_widgets[ $i ]['title']       = isset( $old_widget['name'] ) ? $old_widget['name'] : '';
+//************ ORIGINAL
+/*
 						$new_widgets[ $i ]['title']       = isset( $old_widget['name'] ) ? $old_widget['name'] : 'Simple Calendar';
+*/
+//************ FI
+
 						$new_widgets[ $i ]['calendar_id'] = $id;
 					}
 				}

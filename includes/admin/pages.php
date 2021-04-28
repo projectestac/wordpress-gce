@@ -66,7 +66,19 @@ class Pages {
 				$settings_page = simcal_get_admin_page( $tab );
 
 				if ( $settings_page instanceof Admin_Page ) {
+
+// XTEC ************ AFEGIT - Hidden some config tabs for admins
+// 2016.06.30 @sarjona
+if ( is_xtec_super_admin() || $settings_page->id == 'feeds' ) {
+//************ FI
+
 					$settings_page_tabs[ $settings_page->id ] = $settings_page;
+
+// XTEC ************ AFEGIT - Hidden some config tabs for admins
+// 2016.06.30 @sarjona
+}
+//************ FI
+
 				}
 			}
 

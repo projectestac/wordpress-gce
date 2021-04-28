@@ -176,6 +176,22 @@ function simcal_common_scripts_variables() {
 	return array_merge( $vars, apply_filters( 'simcal_common_scripts_variables', array() ) );
 }
 
+// XTEC ************ MODIFICAT - Added extra parameter to indicate if grouped calendars has to be considered
+// 2016.14.10 @xaviernietosanchez
+/**
+ * Get feed IDs and names.
+ *
+ * @since  3.0.0
+ *
+ * @param  string|int|array $exclude Id or array of ids to drop from results.
+ * @param  bool $cached Use cached query.
+ * @param  bool $includegrouped True if this function includes grouped calendars; false otherwise
+ *
+ * @return array Associative array with ids as keys and feed titles as values.
+ */
+function simcal_get_calendars( $exclude = '', $cached = true, $includegrouped = false ) {
+// ************ ORIGINAL
+/*
 /**
  * Get feed IDs and names.
  *
@@ -186,7 +202,10 @@ function simcal_common_scripts_variables() {
  *
  * @return array Associative array with ids as keys and feed titles as values.
  */
+/*
 function simcal_get_calendars( $exclude = '', $cached = true ) {
+*/
+// ************ FI
 
 	$calendars = get_transient( '_simple-calendar_feed_ids' );
 
@@ -213,6 +232,20 @@ function simcal_get_calendars( $exclude = '', $cached = true ) {
 			array_diff_key( $calendars, array_map( 'intval', array_keys( $exclude ) ) );
 		}
 	}
+
+    // XTEC ************ AFEGIT - Exclude grouped calendars when specified with the $includegrouped param
+    // 2016.14.10 @xaviernietosanchez
+    // 2019.11.04 @nacho
+    if ( $includegrouped === false ) {
+        // Exclude grouped calendars
+        foreach ($calendars as $key => $value) {
+            $meta_calendarGrouped = get_post_meta($key,'_grouped_calendars_ids');
+            if ( isset($meta_calendarGrouped) ) {
+                unset($calendars[$key]);
+            }
+        }
+    }
+    // ************ FI
 
 	return $calendars;
 }
