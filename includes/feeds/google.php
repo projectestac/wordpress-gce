@@ -103,9 +103,25 @@ class Google extends Feed
 		$this->name = __('Google Calendar', 'google-calendar-events');
 
 		// Google client config.
-		$settings = get_option('simple-calendar_settings_feeds');
-		$this->google_api_key = isset($settings['google']['api_key']) ? esc_attr($settings['google']['api_key']) : '';
-		$this->google_client_scopes = [Google_Service_Calendar::CALENDAR_READONLY];
+		$settings = get_option( 'simple-calendar_settings_feeds' );
+		$this->google_api_key = isset( $settings['google']['api_key'] ) ? esc_attr( $settings['google']['api_key'] ) : '';
+
+// XTEC ************ AFEGIT - Choose the appropriate API key
+// 2014.10.08 @aginard
+// 2016.06.21 @sarjona
+        // Behaviour is as follows: First look for an API key in the database. If it is empty,
+        // check if it must use the Agora API key or the XTECBlocs API key.
+        if( empty( $this->google_api_key ) ) {
+            if ( is_agora() ) {
+                global $agora;
+                $this->google_api_key = $agora['google_api_key']; // API key for Agora
+            } else if ( is_xtecblocs() ) {
+                $this->google_api_key = WP_GOOGLE_API_KEY; // API key for XTECBlocs
+            }
+        }
+//************ FI
+
+		$this->google_client_scopes = array( Google_Service_Calendar::CALENDAR_READONLY );
 		$this->google_client = $this->get_client();
 
 		if ($this->post_id > 0) {
@@ -432,6 +448,7 @@ class Google extends Feed
 						);
 					}
 				}
+
 			} else {
 				$message = __('While trying to retrieve events, Google returned an error:', 'google-calendar-events');
 				$message .= '<br><br>' . $error . '<br><br>';
@@ -444,6 +461,7 @@ class Google extends Feed
 
 				return $message;
 			}
+
 		}
 
 		// If no timezone has been set, use calendar feed.
@@ -475,6 +493,7 @@ class Google extends Feed
 						$events[$k] = $v;
 					}
 				}
+
 			}
 
 			if (!empty($events)) {
@@ -614,4 +633,5 @@ class Google extends Feed
 	{
 		return $this->google_client instanceof Google_Client ? new Google_Service_Calendar($this->google_client) : null;
 	}
+
 }

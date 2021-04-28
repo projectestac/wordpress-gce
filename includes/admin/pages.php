@@ -64,8 +64,22 @@ class Pages
 			foreach ($tabs as $tab) {
 				$settings_page = simcal_get_admin_page($tab);
 
-				if ($settings_page instanceof Admin_Page) {
-					$settings_page_tabs[$settings_page->id] = $settings_page;
+				$settings_page = simcal_get_admin_page( $tab );
+
+				if ( $settings_page instanceof Admin_Page ) {
+
+// XTEC ************ AFEGIT - Hidden some config tabs for admins
+// 2016.06.30 @sarjona
+if ( is_xtec_super_admin() || $settings_page->id == 'feeds' ) {
+//************ FI
+
+					$settings_page_tabs[ $settings_page->id ] = $settings_page;
+
+// XTEC ************ AFEGIT - Hidden some config tabs for admins
+// 2016.06.30 @sarjona
+}
+//************ FI
+
 				}
 			}
 
@@ -99,6 +113,7 @@ class Pages
 						$settings[$id] = $settings_page[$id];
 					}
 				}
+
 			}
 		}
 
@@ -148,10 +163,15 @@ class Pages
 													'simple-calendar_' . $this->page . '_' . $tab_id,
 													$section_id
 												);
+
 											} // add field
+
 										} // is field valid?
+
 									} // loop fields
+
 								} // are fields non empty?
+
 							} // are there fields?
 
 							$page = simcal_get_admin_page($tab_id);
@@ -161,11 +181,17 @@ class Pages
 								'simple-calendar_' . $this->page . '_' . $tab_id,
 								$page instanceof Admin_Page ? [$page, 'validate'] : ''
 							);
+
 						} // loop sections
+
 					} // are sections non empty?
+
 				} // are there sections?
+
 			} // loop settings
+
 		} // are there settings?
+
 	}
 
 	/**
@@ -181,6 +207,7 @@ class Pages
 		// Get current tab/section
 		$current_tab = empty($_GET['tab']) ? $this->tab : sanitize_title($_GET['tab']);
 		$this->tab = $current_tab;
+
 		?>
 		<div class="wrap simcal-font-poppins semical-<?php echo $current_tab; ?>-tab" id="simcal-settings-page">
 			<form id="simcal-settings-page-form"
@@ -352,5 +379,7 @@ class Pages
 			</form>
 		</div>
 		<?php
+
 	}
+
 }

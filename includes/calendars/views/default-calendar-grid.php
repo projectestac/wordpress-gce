@@ -114,6 +114,8 @@ class Default_Calendar_Grid implements Calendar_View
 	 *
 	 * @since  3.0.0
 	 *
+	 * @param  string $min
+	 *
 	 * @return array
 	 */
 	public function scripts()
@@ -141,6 +143,8 @@ class Default_Calendar_Grid implements Calendar_View
 	 * Stylesheets to load when this view is displayed.
 	 *
 	 * @since  3.0.0
+	 *
+	 * @param  string $min = ''
 	 *
 	 * @return array
 	 */
@@ -250,17 +254,63 @@ class Default_Calendar_Grid implements Calendar_View
 ]; ?></th>
 						<?php endfor;
 
-     if ($week_starts !== 0):
-     	for ($i = 0; $i < $week_starts; $i++): ?>
-                            <th class="simcal-week-day simcal-week-day-<?php echo $i; ?>"
-                                data-screen-small="<?php echo mb_substr($week_days_short[$i], 0, 1, 'UTF-8'); ?>"
-                                data-screen-medium="<?php echo $week_days_short[$i]; ?>"
-                                data-screen-large="<?php echo $week_days_full[$i]; ?>"><?php echo $week_days_short[
-	$i
-]; ?></th>
-							<?php endfor;
-     endif;
-     ?>
+					for ( $i = $week_starts; $i <= 6; $i ++ ) :
+
+						?>
+
+<!--
+// XTEC ************ MODIFICAT - Change short week-day (to avoid show all "d" in Catalan)
+// 2016.06.27 @sarjona
+-->
+                        <th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
+                            data-screen-small="<?php echo $week_days_short[ $i ]; ?>"
+                            data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
+                            data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+<!--//************ ORIGINAL -->
+<!--
+                        <th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
+                            data-screen-small="<?php echo mb_substr( $week_days_short[ $i ], 0, 1, 'UTF-8' ); ?>"
+                            data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
+                            data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+-->
+<!--
+//************ FI
+-->
+
+						<?php
+
+					endfor;
+
+					if ( $week_starts !== 0 ) :
+						for ( $i = 0; $i < $week_starts; $i ++ ) :
+
+							?>
+
+<!--
+// XTEC ************ MODIFICAT - Change short week-day (to avoid show all "d" in Catalan)
+// 2016.06.27 @sarjona
+-->
+                            <th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
+                                data-screen-small="<?php echo $week_days_short[ $i ]; ?>"
+                                data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
+                                data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+<!--//************ ORIGINAL -->
+<!--
+                            <th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
+                                data-screen-small="<?php echo mb_substr( $week_days_short[ $i ], 0, 1, 'UTF-8' ); ?>"
+                                data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
+                                data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+-->
+<!--
+//************ FI
+-->
+
+							<?php
+
+						endfor;
+					endif;
+
+					?>
                 </tr>
                 </thead>
 
@@ -388,6 +438,7 @@ class Default_Calendar_Grid implements Calendar_View
 			$week_day++;
 
 			$days_in_row++;
+
 		endfor;
 
 		// Actual days of the month.
@@ -478,6 +529,7 @@ class Default_Calendar_Grid implements Calendar_View
 
 						$count++;
 					endif;
+
 				endforeach;
 
 				if ($current_min <= $now && $current_max >= $now) {
@@ -497,9 +549,11 @@ class Default_Calendar_Grid implements Calendar_View
 						'<button class="simcal-events-toggle"><i class="simcal-icon-down simcal-icon-animate"></i></button>';
 				endif;
 
+			else :
+
 				// Empty cell for day with no events.
-			else:
 				$list_events = '<span class="simcal-no-events"></span>';
+
 			endif;
 
 			// The actual days with numbers and events in each row cell.
@@ -548,6 +602,7 @@ class Default_Calendar_Grid implements Calendar_View
 				}
 
 				$days_in_row = -1;
+
 			endif;
 
 			$days_in_row++;
@@ -593,6 +648,7 @@ class Default_Calendar_Grid implements Calendar_View
 		} else {
 			wp_send_json_error('Missing arguments in default calendar grid ajax request.');
 		}
+
 	}
 
 	/**
@@ -624,4 +680,5 @@ class Default_Calendar_Grid implements Calendar_View
 	{
 		return intval($event) < intval($this->end);
 	}
+
 }

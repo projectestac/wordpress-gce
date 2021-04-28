@@ -114,12 +114,30 @@ class Default_Calendar extends Calendar
 			'list' => __('List', 'google-calendar-events'),
 		]);
 
-		parent::__construct($calendar);
+// XTEC ************ AFEGIT - Changed default color for Agora-Nodes
+// 2016.06.21 @sarjona
+        if ( is_agora() ) {
+            global $colors_nodes;
+            $paleta = reactor_option('paleta_colors', 'blaus');
+            $this->today_color = $colors_nodes[$paleta]['primary'];
+            $this->days_events_color = $colors_nodes[$paleta]['calendar'] ?? $colors_nodes[$paleta]['secondary'];
+        }
+//************ FI
 
-		if (!is_null($this->post)) {
-			$this->set_properties($this->view->get_type());
+		$this->type  = 'default-calendar';
+		$this->name  = __( 'Default', 'google-calendar-events' );
+		$this->views = apply_filters( 'simcal_default_calendar_views', array(
+			'grid' => __( 'Grid', 'google-calendar-events' ),
+			'list' => __( 'List', 'google-calendar-events' ),
+		) );
 
-			$id = $this->id;
+		parent::__construct( $calendar );
+
+		if ( ! is_null( $this->post ) ) {
+
+			$this->set_properties( $this->view->get_type() );
+
+			$id    = $this->id;
 			$theme = $this->theme;
 
 			add_filter(
@@ -164,6 +182,16 @@ class Default_Calendar extends Calendar
 			$this->days_events_color = esc_attr($day_events_color);
 		}
 
+// XTEC ************ AFEGIT - Changed default color for Agora-Nodes
+// 2016.06.21 @sarjona
+        if ( is_agora() ) {
+            global $colors_nodes;
+            $paleta = reactor_option('paleta_colors', 'blaus');
+            $this->today_color = $colors_nodes[$paleta]['primary'];
+            $this->days_events_color = $colors_nodes[$paleta]["calendar"] ?? $colors_nodes[$paleta]['secondary'];
+        }
+//************ FI
+
 		// Hide too many events.
 		if ('yes' == get_post_meta($this->id, '_default_calendar_limit_visible_events', true)) {
 			$this->events_limit = absint(get_post_meta($this->id, '_default_calendar_visible_events', true));
@@ -188,7 +216,9 @@ class Default_Calendar extends Calendar
 			if ('yes' == get_post_meta($this->id, '_default_calendar_trim_titles', true)) {
 				$this->trim_titles = max(absint(get_post_meta($this->id, '_default_calendar_trim_titles_chars', true)), 1);
 			}
+
 		} else {
+
 			// List range.
 			$this->group_type = esc_attr(get_post_meta($this->id, '_default_calendar_list_range_type', true));
 			$this->group_span = max(absint(get_post_meta($this->id, '_default_calendar_list_range_span', true)), 1);
@@ -197,7 +227,9 @@ class Default_Calendar extends Calendar
 			if ('yes' == get_post_meta($this->id, '_default_calendar_compact_list', true)) {
 				$this->compact_list = true;
 			}
+
 		}
+
 	}
 
 	/**
@@ -229,7 +261,9 @@ class Default_Calendar extends Calendar
 						}
 					}
 				}
+
 			}
+
 		}
 
 		$events = $old_events + $new_events;
@@ -263,4 +297,5 @@ class Default_Calendar extends Calendar
 
 		return null;
 	}
+
 }

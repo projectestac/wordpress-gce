@@ -83,6 +83,10 @@ class Assets
 
 		do_action('simcal_enqueue_assets');
 
+		do_action( 'simcal_enqueue_assets', $this->min );
+
+
+		$min = $this->min;
 		// Improves compatibility with themes and plugins using Isotope and Masonry.
 		add_action(
 			'wp_enqueue_scripts',
@@ -186,9 +190,12 @@ class Assets
 								2
 							);
 						}
+
 					}
+
 				}
 			}
+
 		}
 	}
 
@@ -230,6 +237,7 @@ class Assets
 					wp_enqueue_script($v);
 				}
 			}
+
 		}
 	}
 
@@ -256,7 +264,9 @@ class Assets
 				} elseif (is_string($v) && !empty($v)) {
 					wp_enqueue_style($v);
 				}
+
 			}
+
 		}
 	}
 }

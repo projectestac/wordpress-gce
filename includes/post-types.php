@@ -147,6 +147,7 @@ class Post_Types
 
 			register_taxonomy('calendar_category', ['calendar'], $args);
 		}
+
 	}
 
 	/**
@@ -211,6 +212,7 @@ class Post_Types
 
 			register_post_type('calendar', apply_filters('simcal_post_type_registration_args', $args));
 		}
+
 	}
 
 	/**
@@ -235,6 +237,7 @@ class Post_Types
 					simcal_print_calendar($post);
 					return ob_get_clean();
 				}
+
 			} else {
 				$post_types = [];
 				$settings = get_option('simple-calendar_settings_calendars');
@@ -267,7 +270,9 @@ class Post_Types
 						return ob_get_clean();
 					}
 				}
+
 			}
+
 		}
 
 		return $the_content;
@@ -297,4 +302,5 @@ class Post_Types
 			simcal_delete_feed_transients($post_id);
 		}
 	}
+
 }

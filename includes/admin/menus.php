@@ -76,6 +76,11 @@ class Menus
 			}
 		);
 
+// XTEC ************ AFEGIT - Hidden Add-ons menu option for admins
+// 2016.06.20 @sarjona
+if ( is_xtec_super_admin() ) {
+//************ FI
+
 		add_submenu_page(
 			self::$main_menu,
 			__('Add-ons', 'google-calendar-events'),
@@ -87,6 +92,16 @@ class Menus
 				$page->html();
 			}
 		);
+
+// XTEC ************ AFEGIT - Hidden rating footer link for admins
+// 2016.06.20 @sarjona
+}
+//************ FI
+
+// XTEC ************ AFEGIT - Hidden Tools menu option for admins
+// 2016.06.20 @sarjona
+if ( is_xtec_super_admin() ) {
+//************ FI
 
 		add_submenu_page(
 			self::$main_menu,
@@ -100,7 +115,12 @@ class Menus
 			}
 		);
 
-		do_action('simcal_admin_add_menu_items');
+// XTEC ************ AFEGIT - Hidden Tools menu option for admins
+// 2016.06.20 @sarjona
+}
+//************ FI
+
+		do_action( 'simcal_admin_add_menu_items' );
 	}
 
 	/**
@@ -202,11 +222,19 @@ class Menus
 						jQuery( this ).parent().text( jQuery( this ).data( 'rated' ) );
 					});";
 				$footer_text .= '</script>';
+
 			} else {
 				$footer_text = __('Thanks for using Simple Calendar!', 'google-calendar-events');
 			}
+
+// XTEC ************ AFEGIT - Hidden rating footer link for admins
+// 2016.06.20 @sarjona
+}
+//************ FI
+
 		}
 
 		return $footer_text;
 	}
+
 }

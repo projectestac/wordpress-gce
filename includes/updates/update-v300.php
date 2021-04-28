@@ -103,7 +103,9 @@ class Update_V300
 				} else {
 					update_post_meta($post_id, '_calendar_begins', $calendar_begins);
 				}
+
 			} else {
+
 				// Legacy list calendars may have a start offset.
 				$offset = absint(get_post_meta($post_id, 'gce_list_start_offset_num', true));
 				if ('list' == $display && $offset > 0) {
@@ -236,6 +238,7 @@ class Update_V300
 			// Post updated.
 			update_post_meta($post_id, '_calendar_version', '3.0.0');
 		}
+
 	}
 
 	/**
@@ -349,9 +352,25 @@ UPDATE {$table} SET `post_type`='calendar' WHERE `post_type`='gce_feed';
 				if (isset($old_widget['id'])) {
 					$id = absint(substr($old_widget['id'], 0, strspn($old_widget['id'], '0123456789')));
 
-					if ($id > 0) {
-						$new_widgets[$i]['title'] = isset($old_widget['name']) ? $old_widget['name'] : 'Simple Calendar';
-						$new_widgets[$i]['calendar_id'] = $id;
+			$new_widgets = array();
+
+			foreach ( $old_widgets as $i => $old_widget ) {
+				if ( isset( $old_widget['id'] ) ) {
+
+					$id = absint( substr( $old_widget['id'], 0, strspn( $old_widget['id'], '0123456789' ) ) );
+
+					if ( $id > 0 ) {
+
+// XTEC ************ MODIFICAT - Don't add the title "Simple Calendar" to the widgets during upgrade
+// 2016.09.07 @aginard
+						$new_widgets[ $i ]['title']       = isset( $old_widget['name'] ) ? $old_widget['name'] : '';
+//************ ORIGINAL
+/*
+						$new_widgets[ $i ]['title']       = isset( $old_widget['name'] ) ? $old_widget['name'] : 'Simple Calendar';
+*/
+//************ FI
+
+						$new_widgets[ $i ]['calendar_id'] = $id;
 					}
 				}
 			}
@@ -377,4 +396,5 @@ UPDATE {$table} SET `post_type`='calendar' WHERE `post_type`='gce_feed';
 		$timestamp = Carbon::createFromFormat('m/d/Y', $date)->getTimestamp();
 		return date('Y-m-d', $timestamp);
 	}
+
 }

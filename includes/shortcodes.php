@@ -45,7 +45,12 @@ class Shortcodes
 		// @deprecated legacy shortcode
 		add_shortcode('gcal', [$this, 'print_calendar']);
 
-		do_action('simcal_add_shortcodes');
+// XTEC ************ AFEGIT - Added legacy deprecated shortcode for compatibility
+// 2016.09.08 @aginard
+		add_shortcode( 'google-calendar-events', array( $this, 'print_calendar' ) );
+//************ FI
+
+		do_action( 'simcal_add_shortcodes' );
 	}
 
 	/**
@@ -76,8 +81,10 @@ class Shortcodes
 				$calendar->html();
 				return ob_get_clean();
 			}
+
 		}
 
 		return '';
 	}
+
 }

@@ -60,6 +60,22 @@ class Google_Admin
 	{
 		$this->feed = $feed;
 		$this->google_api_key = $google_api_key;
+
+// XTEC ************ AFEGIT - Choose the appropriate API key
+// 2014.10.08 @aginard
+// 2016.06.21 @sarjona
+        // Behaviour is as follows: First look for an API key in the database. If it is empty,
+        // check if it must use the Agora API key or the XTECBlocs API key.
+        if ( empty( $this->google_api_key ) ) {
+            if ( is_agora() ) {
+                global $agora;
+                $this->google_api_key = $agora['google_api_key']; // API key for Agora
+            } else if ( is_xtecblocs() ) {
+                $this->google_api_key = WP_GOOGLE_API_KEY; // API key for XTECBlocs
+            }
+        }
+//************ FI
+
 		$this->google_calendar_id = $google_calendar_id;
 
 		$screen = simcal_is_admin_screen();
@@ -80,40 +96,52 @@ class Google_Admin
 	 *
 	 * @return array
 	 */
-	public function settings_fields()
-	{
-		return [
+	public function settings_fields() {
+
+// XTEC ************ AFEGIT - Hidden Google Calendar Pro reference for admins
+// 2016.06.20 @sarjona
+if ( is_xtec_super_admin() ) {
+// ************ FI
+
+		return array(
 			'name' => $this->feed->name,
-			'description' =>
-				'<div class="simcal-text-sm simcal-font-poppins simcal-font-normal simcal-text-sc_grey-100 simcal-mt-[5px]">' .
-				__(
-					"To read events from your public Google Calendars you'll need create a Google API key and save it here.",
-					'google-calendar-events'
-				) .
-				'</div><br/><br/>' .
-				'<em style="font-size: 14px;">' .
-				sprintf(
-					__(
-						'<strong>Note:</strong> Calendars configured to use the <a href="%s" class=" hover:simcal-text-green-600 simcal-underline" target="_blank">Google Calendar Pro add-on</a> use a different method of authorization.',
-						'google-calendar-events'
-					),
-					simcal_ga_campaign_url(simcal_get_url('addons'), 'core-plugin', 'settings-link')
-				) .
-				'</em><section class="simcal-mt-[15px]"><hr></section>',
-			'fields' => [
-				'api_key' => [
-					'type' => 'standard',
-					'subtype' => 'text',
-					'placeholder' => 'Type here...',
-					'class' => [
-						'simcal-wide-text simcal-text-base sc-btn-input simcal-w-[80%] simcal-h-[40px] simcal-mb-[13px]',
-						'ltr',
-					],
-					'title' => __('Google API Key', 'google-calendar-events'),
-					'validation' => [$this, 'check_google_api_key'],
-				],
-			],
-		];
+			'description' => __( "To read events from your public Google Calendars you'll need create a Google API key and save it here.", 'google-calendar-events' ) .
+			                 '<br/><br/>' .
+			                 '<em style="font-size: 14px;">' .
+			                 sprintf( __( '<strong>Note:</strong> Calendars configured to use the <strong><a href="%s" target="_blank">Google Calendar Pro add-on</a></strong> use a different method of authorization.', 'google-calendar-events' ),
+				                 simcal_ga_campaign_url( simcal_get_url( 'addons' ), 'core-plugin', 'settings-link' )
+			                 ) .
+			                 '</em>',
+			'fields' => array(
+				'api_key' => array(
+					'type'       => 'standard',
+					'subtype'    => 'text',
+					'class'      => array( 'simcal-wide-text regular-text', 'ltr' ),
+					'title'      => __( 'Google API Key', 'google-calendar-events' ),
+					'validation' => array( $this, 'check_google_api_key' ),
+				),
+			),
+		);
+
+// XTEC ************ AFEGIT - Hidden Google Calendar Pro reference for admins
+// 2016.06.20 @sarjona
+} else {
+		return array(
+			'name' => $this->feed->name,
+			'description' => __( "To read events from your public Google Calendars you'll need create a Google API key and save it here.", 'google-calendar-events' ) . '<br/><br/>',
+			'fields' => array(
+				'api_key' => array(
+					'type'       => 'standard',
+					'subtype'    => 'text',
+					'class'      => array( 'simcal-wide-text regular-text', 'ltr' ),
+					'title'      => __( 'Google API Key', 'google-calendar-events' ),
+					'validation' => array( $this, 'check_google_api_key' ),
+				),
+			),
+		);
+}
+//************ FI
+
 	}
 
 	/**
@@ -250,7 +278,16 @@ class Google_Admin
 					],
 				],
 			],
-		]; ?>
+		]; 
+
+// XTEC ************ AFEGIT - Hidden Add-ons menu option for admins
+// 2016.06.20 @sarjona
+if ( ! is_xtec_super_admin() ) {
+	unset($inputs[$this->feed->type]['_google_events_search_query']);
+	unset($inputs[$this->feed->type]['_google_events_max_results']);
+}
+//************ FI
+?>
 		<div id="google-settings-panel" class="simcal-panel">
 			<table>
 				<thead>
@@ -260,6 +297,7 @@ class Google_Admin
 			</table>
 		</div>
 		<?php
+
 	}
 
 	/**
@@ -329,7 +367,9 @@ class Google_Admin
 			if (empty($this->google_api_key) && $feed == $this->feed->type) {
 				$has_errors = true;
 				$no_key_notice->add();
+
 			} else {
+
 				$no_key_notice->remove();
 
 				try {
@@ -366,7 +406,9 @@ class Google_Admin
 					$error_notice->remove();
 					$has_errors = false;
 				}
+
 			}
+
 		}
 
 		return $message;
@@ -397,4 +439,5 @@ class Google_Admin
 
 		$this->test_api_key_connection($calendar_id);
 	}
+
 }

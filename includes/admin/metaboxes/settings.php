@@ -67,6 +67,7 @@ class Settings implements Meta_Box
 			</div>
 		</div>
 		<?php
+
 	}
 
 	/**
@@ -117,6 +118,7 @@ class Settings implements Meta_Box
 				</select>
 			</label>
 			<?php
+
 		}
 
 		if ($calendar_options) {
@@ -204,14 +206,24 @@ class Settings implements Meta_Box
 				$icon = $tab['icon'] ? $tab['icon'] : 'simcal-icon-panel';
 				$class = $tab['class'] ? $tab['class'] : [];
 
-				echo '<li class="' . $key . '-settings ' . $key . '-tab ' . implode(' ', $class) . '" data-tab="' . $key . '">';
-				echo '<a href="#' .
-					$tab['target'] .
-					'"><i class="' .
-					$icon .
-					'" ></i> <span>' .
-					esc_html($tab['label']) .
-					'</span></a>';
+			if ( isset( $tab['target'] ) && isset( $tab['label'] ) ) {
+
+				$icon  = $tab['icon'] ? $tab['icon'] : 'simcal-icon-panel';
+				$class = $tab['class'] ? $tab['class'] : array();
+
+// XTEC ************ MODIFICAT - Hide advanced tab for admins
+// 2016.06.21 @sarjona
+				$style = '';
+				if ( !is_xtec_super_admin() && $key == 'advanced' ) {
+					$style = ' style="display: none; visibility: hidden" ';
+				}
+				echo '<li '.$style.' class="' . $key . '-settings ' . $key . '-tab ' . implode( ' ', $class ) . '" data-tab="' . $key . '">';
+//************ ORIGINAL
+/*
+				echo '<li class="' . $key . '-settings ' . $key . '-tab ' . implode( ' ', $class ) . '" data-tab="' . $key . '">';
+*/
+//************ FI
+				echo '<a href="#' . $tab['target'] . '"><i class="' . $icon . '" ></i> <span>' . esc_html( $tab['label'] ) . '</span></a>';
 				echo '</li>';
 			}
 		}
@@ -502,6 +514,7 @@ class Settings implements Meta_Box
 			</tbody>
 		</table>
 		<?php
+
 	}
 
 	/**
@@ -612,6 +625,7 @@ class Settings implements Meta_Box
 			</tbody>
 		</table>
 		<?php
+
 	}
 
 	/**
@@ -946,9 +960,21 @@ class Settings implements Meta_Box
     $cache_freq = esc_attr(get_post_meta($post->ID, '_feed_cache_user_amount', true));
     $cache_unit = esc_attr(get_post_meta($post->ID, '_feed_cache_user_unit', true));
 
-    $cache_freq = intval($cache_freq) && $cache_freq >= 0 ? $cache_freq : 2;
-    $cache_unit = $cache_unit ? $cache_unit : '3600';
-    ?>
+				$cache_freq = esc_attr( get_post_meta( $post->ID, '_feed_cache_user_amount', true ) );
+				$cache_unit = esc_attr( get_post_meta( $post->ID, '_feed_cache_user_unit', true ) );
+
+// XTEC ************ MODIFICAT - Set default cache value to 5 minutes
+// 2016.09.07 @aginard
+				$cache_freq = intval( $cache_freq ) && $cache_freq >= 0 ? $cache_freq : 5;
+				$cache_unit = $cache_unit ? $cache_unit : '60';
+//************ ORIGINAL
+/*
+				$cache_freq = intval( $cache_freq ) && $cache_freq >= 0 ? $cache_freq : 2;
+				$cache_unit = $cache_unit ? $cache_unit : '3600';
+*/
+//************ FI
+
+				?>
 				<tr class="simcal-panel-field">
 					<th>
 						<label for="_feed_cache_user_amount"><?php _ex(
@@ -998,6 +1024,7 @@ class Settings implements Meta_Box
 			</tbody>
 		</table>
 		<?php
+
 	}
 
 	/**
@@ -1034,6 +1061,7 @@ class Settings implements Meta_Box
 				</tbody>
 				<?php endif;
 		endforeach;
+
 	}
 
 	/**
@@ -1216,4 +1244,5 @@ class Settings implements Meta_Box
 		// Clear cache.
 		simcal_delete_feed_transients($post_id);
 	}
+
 }

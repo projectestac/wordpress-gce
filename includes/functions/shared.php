@@ -48,6 +48,7 @@ function simcal_log_error($text)
 	return true;
 }
 
+
 /**
  * Get plugin URL.
  *
@@ -187,12 +188,27 @@ function simcal_common_scripts_variables()
  *
  * @param  string|int|array $exclude Id or array of ids to drop from results.
  * @param  bool $cached Use cached query.
+ * @param  bool $includegrouped True if this function includes grouped calendars; false otherwise
  *
  * @return array Associative array with ids as keys and feed titles as values.
  */
-function simcal_get_calendars($exclude = '', $cached = true)
-{
-	$calendars = get_transient('_simple-calendar_feed_ids');
+function simcal_get_calendars( $exclude = '', $cached = true, $includegrouped = false ) {
+// ************ ORIGINAL
+/*
+/**
+ * Get feed IDs and names.
+ *
+ * @since  3.0.0
+ *
+ * @param  string|int|array $exclude Id or array of ids to drop from results.
+ * @param  bool $cached Use cached query.
+ *
+ * @return array Associative array with ids as keys and feed titles as values.
+ */
+/*
+function simcal_get_calendars( $exclude = '', $cached = true ) {
+*/
+// ************ FI
 
 	if (!$calendars || $cached === false) {
 		$posts = get_posts([
@@ -216,6 +232,20 @@ function simcal_get_calendars($exclude = '', $cached = true)
 			array_diff_key($calendars, array_map('intval', array_keys($exclude)));
 		}
 	}
+
+    // XTEC ************ AFEGIT - Exclude grouped calendars when specified with the $includegrouped param
+    // 2016.14.10 @xaviernietosanchez
+    // 2019.11.04 @nacho
+    if ( $includegrouped === false ) {
+        // Exclude grouped calendars
+        foreach ($calendars as $key => $value) {
+            $meta_calendarGrouped = get_post_meta($key,'_grouped_calendars_ids');
+            if ( isset($meta_calendarGrouped) ) {
+                unset($calendars[$key]);
+            }
+        }
+    }
+    // ************ FI
 
 	return $calendars;
 }
@@ -272,6 +302,7 @@ function simcal_get_calendar_names_i18n($group, $style = 'full')
 			$names[strval($i)] = date_i18n($format, $date->getTimestamp());
 			$i++;
 		}
+
 	}
 
 	return $names;
@@ -386,6 +417,7 @@ function simcal_get_timezone_from_gmt_offset($offset)
 					}
 				}
 			}
+
 		}
 
 		return $timezone;
@@ -471,6 +503,7 @@ function simcal_delete_feed_transients($id = '')
 				}
 			}
 		}
+
 	} else {
 		$post = get_post($id);
 		$calendar = simcal_get_calendar($post);
