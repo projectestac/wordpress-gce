@@ -109,13 +109,14 @@ class Default_Calendar extends Calendar {
 
 // XTEC ************ AFEGIT - Changed default color for Agora-Nodes
 // 2016.06.21 @sarjona
-        if ( is_agora() ) {
+// 2021.06.10 @aginard
+        if ( is_agora() && function_exists('reactor_option') ) {
             global $colors_nodes;
             $paleta = reactor_option('paleta_colors', 'blaus');
             $this->today_color = $colors_nodes[$paleta]['primary'];
             $this->days_events_color = $colors_nodes[$paleta]['calendar'] ?? $colors_nodes[$paleta]['secondary'];
         }
-//************ FI
+// ************ FI
 
 		$this->type  = 'default-calendar';
 		$this->name  = __( 'Default', 'google-calendar-events' );
@@ -173,13 +174,14 @@ class Default_Calendar extends Calendar {
 
 // XTEC ************ AFEGIT - Changed default color for Agora-Nodes
 // 2016.06.21 @sarjona
-        if ( is_agora() ) {
+// 2021.06.10 @aginard
+        if ( is_agora() && function_exists('reactor_option') ) {
             global $colors_nodes;
             $paleta = reactor_option('paleta_colors', 'blaus');
             $this->today_color = $colors_nodes[$paleta]['primary'];
-            $this->days_events_color = $colors_nodes[$paleta]["calendar"] ?? $colors_nodes[$paleta]['secondary'];
+            $this->days_events_color = $colors_nodes[$paleta]['calendar'] ?? $colors_nodes[$paleta]['secondary'];
         }
-//************ FI
+// ************ FI
 
 		// Hide too many events.
 		if ( 'yes' == get_post_meta( $this->id, '_default_calendar_limit_visible_events', true ) ) {
