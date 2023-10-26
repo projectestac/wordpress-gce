@@ -14,7 +14,7 @@ use SimpleCalendar\plugin_deps\Psr\Http\Message\ResponseInterface;
 class HandlerStack
 {
     /**
-     * @var null|callable(RequestInterface, array): PromiseInterface
+     * @var (callable(RequestInterface, array): PromiseInterface)|null
      */
     private $handler;
     /**
@@ -22,7 +22,7 @@ class HandlerStack
      */
     private $stack = [];
     /**
-     * @var null|callable(RequestInterface, array): PromiseInterface
+     * @var (callable(RequestInterface, array): PromiseInterface)|null
      */
     private $cached;
     /**
@@ -36,21 +36,21 @@ class HandlerStack
      * The returned handler stack can be passed to a client in the "handler"
      * option.
      *
-     * @param null|callable(RequestInterface, array): PromiseInterface $handler HTTP handler function to use with the stack. If no
-     *                                                                          handler is provided, the best handler for your
-     *                                                                          system will be utilized.
+     * @param (callable(RequestInterface, array): PromiseInterface)|null $handler HTTP handler function to use with the stack. If no
+     *                                                                            handler is provided, the best handler for your
+     *                                                                            system will be utilized.
      */
-    public static function create(?callable $handler = null) : self
+    public static function create(callable $handler = null) : self
     {
-        $stack = new self($handler ?: \SimpleCalendar\plugin_deps\GuzzleHttp\Utils::chooseHandler());
-        $stack->push(\SimpleCalendar\plugin_deps\GuzzleHttp\Middleware::httpErrors(), 'http_errors');
-        $stack->push(\SimpleCalendar\plugin_deps\GuzzleHttp\Middleware::redirect(), 'allow_redirects');
-        $stack->push(\SimpleCalendar\plugin_deps\GuzzleHttp\Middleware::cookies(), 'cookies');
-        $stack->push(\SimpleCalendar\plugin_deps\GuzzleHttp\Middleware::prepareBody(), 'prepare_body');
+        $stack = new self($handler ?: Utils::chooseHandler());
+        $stack->push(Middleware::httpErrors(), 'http_errors');
+        $stack->push(Middleware::redirect(), 'allow_redirects');
+        $stack->push(Middleware::cookies(), 'cookies');
+        $stack->push(Middleware::prepareBody(), 'prepare_body');
         return $stack;
     }
     /**
-     * @param null|callable(RequestInterface, array): PromiseInterface $handler Underlying HTTP handler.
+     * @param (callable(RequestInterface, array): PromiseInterface)|null $handler Underlying HTTP handler.
      */
     public function __construct(callable $handler = null)
     {
@@ -76,13 +76,13 @@ class HandlerStack
         $depth = 0;
         $stack = [];
         if ($this->handler !== null) {
-            $stack[] = "0) Handler: " . $this->debugCallable($this->handler);
+            $stack[] = '0) Handler: ' . $this->debugCallable($this->handler);
         }
         $result = '';
         foreach (\array_reverse($this->stack) as $tuple) {
-            $depth++;
+            ++$depth;
             $str = "{$depth}) Name: '{$tuple[1]}', ";
-            $str .= "Function: " . $this->debugCallable($tuple[0]);
+            $str .= 'Function: ' . $this->debugCallable($tuple[0]);
             $result = "> {$str}\n{$result}";
             $stack[] = $str;
         }
@@ -115,7 +115,7 @@ class HandlerStack
      * @param callable(callable): callable $middleware Middleware function
      * @param string                       $name       Name to register for this middleware.
      */
-    public function unshift(callable $middleware, ?string $name = null) : void
+    public function unshift(callable $middleware, string $name = null) : void
     {
         \array_unshift($this->stack, [$middleware, $name]);
         $this->cached = null;
@@ -160,6 +160,9 @@ class HandlerStack
      */
     public function remove($remove) : void
     {
+        if (!\is_string($remove) && !\is_callable($remove)) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a callable or string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+        }
         $this->cached = null;
         $idx = \is_callable($remove) ? 0 : 1;
         $this->stack = \array_values(\array_filter($this->stack, static function ($tuple) use($idx, $remove) {
@@ -219,7 +222,7 @@ class HandlerStack
     /**
      * Provides a debug string for a given callable.
      *
-     * @param callable $fn Function to write as a string.
+     * @param callable|string $fn Function to write as a string.
      */
     private function debugCallable($fn) : string
     {

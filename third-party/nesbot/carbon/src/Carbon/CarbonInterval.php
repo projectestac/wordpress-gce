@@ -14,6 +14,7 @@ use SimpleCalendar\plugin_deps\Carbon\Exceptions\BadFluentConstructorException;
 use SimpleCalendar\plugin_deps\Carbon\Exceptions\BadFluentSetterException;
 use SimpleCalendar\plugin_deps\Carbon\Exceptions\InvalidCastException;
 use SimpleCalendar\plugin_deps\Carbon\Exceptions\InvalidIntervalException;
+use SimpleCalendar\plugin_deps\Carbon\Exceptions\OutOfRangeException;
 use SimpleCalendar\plugin_deps\Carbon\Exceptions\ParseErrorException;
 use SimpleCalendar\plugin_deps\Carbon\Exceptions\UnitNotConfiguredException;
 use SimpleCalendar\plugin_deps\Carbon\Exceptions\UnknownGetterException;
@@ -21,12 +22,20 @@ use SimpleCalendar\plugin_deps\Carbon\Exceptions\UnknownSetterException;
 use SimpleCalendar\plugin_deps\Carbon\Exceptions\UnknownUnitException;
 use SimpleCalendar\plugin_deps\Carbon\Traits\IntervalRounding;
 use SimpleCalendar\plugin_deps\Carbon\Traits\IntervalStep;
+use SimpleCalendar\plugin_deps\Carbon\Traits\MagicParameter;
 use SimpleCalendar\plugin_deps\Carbon\Traits\Mixin;
 use SimpleCalendar\plugin_deps\Carbon\Traits\Options;
+use SimpleCalendar\plugin_deps\Carbon\Traits\ToStringFormat;
 use Closure;
 use DateInterval;
+use SimpleCalendar\plugin_deps\DateMalformedIntervalStringException;
+use DateTimeInterface;
+use DateTimeZone;
 use Exception;
+use InvalidArgumentException;
 use ReflectionException;
+use ReturnTypeWillChange;
+use RuntimeException;
 use Throwable;
 /**
  * A simple API extension for DateInterval.
@@ -41,7 +50,7 @@ use Throwable;
  * @property int $minutes Total minutes of the current interval.
  * @property int $seconds Total seconds of the current interval.
  * @property int $microseconds Total microseconds of the current interval.
- * @property int $milliseconds Total microseconds of the current interval.
+ * @property int $milliseconds Total milliseconds of the current interval.
  * @property int $microExcludeMilli Remaining microseconds without the milliseconds.
  * @property int $dayzExcludeWeeks Total days remaining in the final week of the current instance (days % 7).
  * @property int $daysExcludeWeeks alias of dayzExcludeWeeks
@@ -175,25 +184,27 @@ use Throwable;
  * @method $this ceilMicrosecond(int|float $precision = 1) Ceil the current instance microsecond with given precision.
  * @method $this ceilMicroseconds(int|float $precision = 1) Ceil the current instance microsecond with given precision.
  */
-class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps\Carbon\CarbonConverterInterface
+class CarbonInterval extends DateInterval implements CarbonConverterInterface
 {
     use IntervalRounding;
     use IntervalStep;
+    use MagicParameter;
     use Mixin {
         Mixin::mixin as baseMixin;
     }
     use Options;
+    use ToStringFormat;
     /**
      * Interval spec period designators
      */
-    const PERIOD_PREFIX = 'P';
-    const PERIOD_YEARS = 'Y';
-    const PERIOD_MONTHS = 'M';
-    const PERIOD_DAYS = 'D';
-    const PERIOD_TIME_PREFIX = 'T';
-    const PERIOD_HOURS = 'H';
-    const PERIOD_MINUTES = 'M';
-    const PERIOD_SECONDS = 'S';
+    public const PERIOD_PREFIX = 'P';
+    public const PERIOD_YEARS = 'Y';
+    public const PERIOD_MONTHS = 'M';
+    public const PERIOD_DAYS = 'D';
+    public const PERIOD_TIME_PREFIX = 'T';
+    public const PERIOD_HOURS = 'H';
+    public const PERIOD_MINUTES = 'M';
+    public const PERIOD_SECONDS = 'S';
     /**
      * A translator to ... er ... translate stuff
      *
@@ -213,6 +224,10 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      */
     private static $flipCascadeFactors;
     /**
+     * @var bool
+     */
+    private static $floatSettersEnabled = \false;
+    /**
      * The registered macros.
      *
      * @var array
@@ -225,6 +240,20 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      */
     protected $tzName;
     /**
+     * Set the instance's timezone from a string or object.
+     *
+     * @param \DateTimeZone|string $tzName
+     *
+     * @return static
+     */
+    public function setTimezone($tzName)
+    {
+        $this->tzName = $tzName;
+        return $this;
+    }
+    /**
+     * @internal
+     *
      * Set the instance's timezone from a string or object and add/subtract the offset difference.
      *
      * @param \DateTimeZone|string $tzName
@@ -245,7 +274,11 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      */
     public static function getCascadeFactors()
     {
-        return static::$cascadeFactors ?: ['milliseconds' => [\SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND, 'microseconds'], 'seconds' => [\SimpleCalendar\plugin_deps\Carbon\Carbon::MILLISECONDS_PER_SECOND, 'milliseconds'], 'minutes' => [\SimpleCalendar\plugin_deps\Carbon\Carbon::SECONDS_PER_MINUTE, 'seconds'], 'hours' => [\SimpleCalendar\plugin_deps\Carbon\Carbon::MINUTES_PER_HOUR, 'minutes'], 'dayz' => [\SimpleCalendar\plugin_deps\Carbon\Carbon::HOURS_PER_DAY, 'hours'], 'weeks' => [\SimpleCalendar\plugin_deps\Carbon\Carbon::DAYS_PER_WEEK, 'dayz'], 'months' => [\SimpleCalendar\plugin_deps\Carbon\Carbon::WEEKS_PER_MONTH, 'weeks'], 'years' => [\SimpleCalendar\plugin_deps\Carbon\Carbon::MONTHS_PER_YEAR, 'months']];
+        return static::$cascadeFactors ?: static::getDefaultCascadeFactors();
+    }
+    protected static function getDefaultCascadeFactors() : array
+    {
+        return ['milliseconds' => [Carbon::MICROSECONDS_PER_MILLISECOND, 'microseconds'], 'seconds' => [Carbon::MILLISECONDS_PER_SECOND, 'milliseconds'], 'minutes' => [Carbon::SECONDS_PER_MINUTE, 'seconds'], 'hours' => [Carbon::MINUTES_PER_HOUR, 'minutes'], 'dayz' => [Carbon::HOURS_PER_DAY, 'hours'], 'weeks' => [Carbon::DAYS_PER_WEEK, 'dayz'], 'months' => [Carbon::WEEKS_PER_MONTH, 'weeks'], 'years' => [Carbon::MONTHS_PER_YEAR, 'months']];
     }
     private static function standardizeUnit($unit)
     {
@@ -272,20 +305,32 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         self::$flipCascadeFactors = null;
         static::$cascadeFactors = $cascadeFactors;
     }
+    /**
+     * This option allow you to opt-in for the Carbon 3 behavior where float
+     * values will no longer be cast to integer (so truncated).
+     *
+     * ⚠️ This settings will be applied globally, which mean your whole application
+     * code including the third-party dependencies that also may use Carbon will
+     * adopt the new behavior.
+     */
+    public static function enableFloatSetters(bool $floatSettersEnabled = \true) : void
+    {
+        self::$floatSettersEnabled = $floatSettersEnabled;
+    }
     ///////////////////////////////////////////////////////////////////
     //////////////////////////// CONSTRUCTORS /////////////////////////
     ///////////////////////////////////////////////////////////////////
     /**
      * Create a new CarbonInterval instance.
      *
-     * @param int|null $years
-     * @param int|null $months
-     * @param int|null $weeks
-     * @param int|null $days
-     * @param int|null $hours
-     * @param int|null $minutes
-     * @param int|null $seconds
-     * @param int|null $microseconds
+     * @param Closure|DateInterval|string|int|null $years
+     * @param int|float|null                       $months
+     * @param int|float|null                       $weeks
+     * @param int|float|null                       $days
+     * @param int|float|null                       $hours
+     * @param int|float|null                       $minutes
+     * @param int|float|null                       $seconds
+     * @param int|float|null                       $microseconds
      *
      * @throws Exception when the interval_spec (passed as $years) cannot be parsed as an interval.
      */
@@ -298,11 +343,12 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         if ($years instanceof DateInterval) {
             parent::__construct(static::getDateIntervalSpec($years));
             $this->f = $years->f;
-            static::copyNegativeUnits($years, $this);
+            self::copyNegativeUnits($years, $this);
             return;
         }
         $spec = $years;
-        if (!\is_string($spec) || \floatval($years) || \preg_match('/^[0-9.]/', $years)) {
+        $isStringSpec = \is_string($spec) && !\preg_match('/^[\\d.]/', $spec);
+        if (!$isStringSpec || (float) $years) {
             $spec = static::PERIOD_PREFIX;
             $spec .= $years > 0 ? $years . static::PERIOD_YEARS : '';
             $spec .= $months > 0 ? $months . static::PERIOD_MONTHS : '';
@@ -321,9 +367,57 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
                 $spec .= '0' . static::PERIOD_YEARS;
             }
         }
-        parent::__construct($spec);
-        if (!\is_null($microseconds)) {
-            $this->f = $microseconds / \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_SECOND;
+        try {
+            parent::__construct($spec);
+        } catch (Throwable $exception) {
+            try {
+                parent::__construct('PT0S');
+                if ($isStringSpec) {
+                    if (!\preg_match('/^P
+                        (?:(?<year>[+-]?\\d*(?:\\.\\d+)?)Y)?
+                        (?:(?<month>[+-]?\\d*(?:\\.\\d+)?)M)?
+                        (?:(?<week>[+-]?\\d*(?:\\.\\d+)?)W)?
+                        (?:(?<day>[+-]?\\d*(?:\\.\\d+)?)D)?
+                        (?:T
+                            (?:(?<hour>[+-]?\\d*(?:\\.\\d+)?)H)?
+                            (?:(?<minute>[+-]?\\d*(?:\\.\\d+)?)M)?
+                            (?:(?<second>[+-]?\\d*(?:\\.\\d+)?)S)?
+                        )?
+                    $/x', $spec, $match)) {
+                        throw new InvalidArgumentException("Invalid duration: {$spec}");
+                    }
+                    $years = (float) ($match['year'] ?? 0);
+                    $this->assertSafeForInteger('year', $years);
+                    $months = (float) ($match['month'] ?? 0);
+                    $this->assertSafeForInteger('month', $months);
+                    $weeks = (float) ($match['week'] ?? 0);
+                    $this->assertSafeForInteger('week', $weeks);
+                    $days = (float) ($match['day'] ?? 0);
+                    $this->assertSafeForInteger('day', $days);
+                    $hours = (float) ($match['hour'] ?? 0);
+                    $this->assertSafeForInteger('hour', $hours);
+                    $minutes = (float) ($match['minute'] ?? 0);
+                    $this->assertSafeForInteger('minute', $minutes);
+                    $seconds = (float) ($match['second'] ?? 0);
+                    $this->assertSafeForInteger('second', $seconds);
+                }
+                $totalDays = $weeks * static::getDaysPerWeek() + $days;
+                $this->assertSafeForInteger('days total (including weeks)', $totalDays);
+                $this->y = (int) $years;
+                $this->m = (int) $months;
+                $this->d = (int) $totalDays;
+                $this->h = (int) $hours;
+                $this->i = (int) $minutes;
+                $this->s = (int) $seconds;
+                if ((float) $this->y !== $years || (float) $this->m !== $months || (float) $this->d !== $totalDays || (float) $this->h !== $hours || (float) $this->i !== $minutes || (float) $this->s !== $seconds) {
+                    $this->add(static::fromString($years - $this->y . ' years ' . ($months - $this->m) . ' months ' . ($totalDays - $this->d) . ' days ' . ($hours - $this->h) . ' hours ' . ($minutes - $this->i) . ' minutes ' . ($seconds - $this->s) . ' seconds '));
+                }
+            } catch (Throwable $secondException) {
+                throw $secondException instanceof OutOfRangeException ? $secondException : $exception;
+            }
+        }
+        if ($microseconds !== null) {
+            $this->f = $microseconds / Carbon::MICROSECONDS_PER_SECOND;
         }
     }
     /**
@@ -332,13 +426,13 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      * @param string $source
      * @param string $target
      *
-     * @return int|null
+     * @return int|float|null
      */
     public static function getFactor($source, $target)
     {
         $source = self::standardizeUnit($source);
         $target = self::standardizeUnit($target);
-        $factors = static::getFlipCascadeFactors();
+        $factors = self::getFlipCascadeFactors();
         if (isset($factors[$source])) {
             [$to, $factor] = $factors[$source];
             if ($to === $target) {
@@ -349,58 +443,76 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         return null;
     }
     /**
+     * Returns the factor for a given source-to-target couple if set,
+     * else try to find the appropriate constant as the factor, such as Carbon::DAYS_PER_WEEK.
+     *
+     * @param string $source
+     * @param string $target
+     *
+     * @return int|float|null
+     */
+    public static function getFactorWithDefault($source, $target)
+    {
+        $factor = self::getFactor($source, $target);
+        if ($factor) {
+            return $factor;
+        }
+        static $defaults = ['month' => ['year' => Carbon::MONTHS_PER_YEAR], 'week' => ['month' => Carbon::WEEKS_PER_MONTH], 'day' => ['week' => Carbon::DAYS_PER_WEEK], 'hour' => ['day' => Carbon::HOURS_PER_DAY], 'minute' => ['hour' => Carbon::MINUTES_PER_HOUR], 'second' => ['minute' => Carbon::SECONDS_PER_MINUTE], 'millisecond' => ['second' => Carbon::MILLISECONDS_PER_SECOND], 'microsecond' => ['millisecond' => Carbon::MICROSECONDS_PER_MILLISECOND]];
+        return $defaults[$source][$target] ?? null;
+    }
+    /**
      * Returns current config for days per week.
      *
-     * @return int
+     * @return int|float
      */
     public static function getDaysPerWeek()
     {
-        return static::getFactor('dayz', 'weeks') ?: \SimpleCalendar\plugin_deps\Carbon\Carbon::DAYS_PER_WEEK;
+        return static::getFactor('dayz', 'weeks') ?: Carbon::DAYS_PER_WEEK;
     }
     /**
      * Returns current config for hours per day.
      *
-     * @return int
+     * @return int|float
      */
     public static function getHoursPerDay()
     {
-        return static::getFactor('hours', 'dayz') ?: \SimpleCalendar\plugin_deps\Carbon\Carbon::HOURS_PER_DAY;
+        return static::getFactor('hours', 'dayz') ?: Carbon::HOURS_PER_DAY;
     }
     /**
      * Returns current config for minutes per hour.
      *
-     * @return int
+     * @return int|float
      */
     public static function getMinutesPerHour()
     {
-        return static::getFactor('minutes', 'hours') ?: \SimpleCalendar\plugin_deps\Carbon\Carbon::MINUTES_PER_HOUR;
+        return static::getFactor('minutes', 'hours') ?: Carbon::MINUTES_PER_HOUR;
     }
     /**
      * Returns current config for seconds per minute.
      *
-     * @return int
+     * @return int|float
      */
     public static function getSecondsPerMinute()
     {
-        return static::getFactor('seconds', 'minutes') ?: \SimpleCalendar\plugin_deps\Carbon\Carbon::SECONDS_PER_MINUTE;
+        return static::getFactor('seconds', 'minutes') ?: Carbon::SECONDS_PER_MINUTE;
     }
     /**
      * Returns current config for microseconds per second.
      *
-     * @return int
+     * @return int|float
      */
     public static function getMillisecondsPerSecond()
     {
-        return static::getFactor('milliseconds', 'seconds') ?: \SimpleCalendar\plugin_deps\Carbon\Carbon::MILLISECONDS_PER_SECOND;
+        return static::getFactor('milliseconds', 'seconds') ?: Carbon::MILLISECONDS_PER_SECOND;
     }
     /**
      * Returns current config for microseconds per second.
      *
-     * @return int
+     * @return int|float
      */
     public static function getMicrosecondsPerMillisecond()
     {
-        return static::getFactor('microseconds', 'milliseconds') ?: \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND;
+        return static::getFactor('microseconds', 'milliseconds') ?: Carbon::MICROSECONDS_PER_MILLISECOND;
     }
     /**
      * Create a new CarbonInterval instance from specific values.
@@ -433,10 +545,10 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      * echo Carboninterval::createFromFormat('H:i', '1:30');
      * ```
      *
-     * @param string $format   Format of the $interval input string
-     * @param string $interval Input string to convert into an interval
+     * @param string      $format   Format of the $interval input string
+     * @param string|null $interval Input string to convert into an interval
      *
-     * @throws Exception when the $interval cannot be parsed as an interval.
+     * @throws \Carbon\Exceptions\ParseErrorException when the $interval cannot be parsed as an interval.
      *
      * @return static
      */
@@ -450,6 +562,7 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
             $interval[$index] = \str_pad($interval[$index], $match[2] === 'v' ? 3 : 6, '0');
             $interval = \implode($match[1], $interval);
         }
+        $interval = $interval ?? '';
         for ($index = 0; $index < $length; $index++) {
             $expected = \mb_substr($format, $index, 1);
             $nextCharacter = \mb_substr($interval, 0, 1);
@@ -459,11 +572,11 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
                     throw new ParseErrorException('number', $nextCharacter);
                 }
                 $interval = \mb_substr($interval, \mb_strlen($match[0]));
-                $instance->{$unit} += \intval($match[0]);
+                $instance->{$unit} += (int) $match[0];
                 continue;
             }
             if ($nextCharacter !== $expected) {
-                throw new ParseErrorException("'{$expected}'", $nextCharacter, 'Allowed substitutes for interval formats are ' . \implode(', ', \array_keys(static::$formats)) . "\n" . 'See https://www.php.net/manual/en/function.date.php for their meaning');
+                throw new ParseErrorException("'{$expected}'", $nextCharacter, 'Allowed substitutes for interval formats are ' . \implode(', ', \array_keys(static::$formats)) . "\n" . 'See https://php.net/manual/en/function.date.php for their meaning');
             }
             $interval = \mb_substr($interval, 1);
         }
@@ -516,11 +629,26 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
             $interval->localStrictModeEnabled = $localStrictModeEnabled;
             return $result;
         } catch (BadFluentSetterException $exception) {
-            if (\SimpleCalendar\plugin_deps\Carbon\Carbon::isStrictModeEnabled()) {
+            if (Carbon::isStrictModeEnabled()) {
                 throw new BadFluentConstructorException($method, 0, $exception);
             }
             return null;
         }
+    }
+    /**
+     * Evaluate the PHP generated by var_export() and recreate the exported CarbonInterval instance.
+     *
+     * @param array $dump data as exported by var_export()
+     *
+     * @return static
+     */
+    #[ReturnTypeWillChange]
+    public static function __set_state($dump)
+    {
+        /** @noinspection PhpVoidFunctionResultUsedInspection */
+        /** @var DateInterval $dateInterval */
+        $dateInterval = parent::__set_state($dump);
+        return static::instance($dateInterval);
     }
     /**
      * Return the current context from inside a macro callee or a new one if static.
@@ -574,8 +702,8 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         $pattern = '/(\\d+(?:\\.\\d+)?)\\h*([^\\d\\h]*)/i';
         \preg_match_all($pattern, $intervalDefinition, $parts, \PREG_SET_ORDER);
         while ([$part, $value, $unit] = \array_shift($parts)) {
-            $intValue = \intval($value);
-            $fraction = \floatval($value) - $intValue;
+            $intValue = (int) $value;
+            $fraction = (float) $value - $intValue;
             // Fix calculation precision
             switch (\round($fraction, 6)) {
                 case 1:
@@ -589,28 +717,31 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
             switch ($unit === 'µs' ? 'µs' : \strtolower($unit)) {
                 case 'millennia':
                 case 'millennium':
-                    $years += $intValue * \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::YEARS_PER_MILLENNIUM;
+                    $years += $intValue * CarbonInterface::YEARS_PER_MILLENNIUM;
                     break;
                 case 'century':
                 case 'centuries':
-                    $years += $intValue * \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::YEARS_PER_CENTURY;
+                    $years += $intValue * CarbonInterface::YEARS_PER_CENTURY;
                     break;
                 case 'decade':
                 case 'decades':
-                    $years += $intValue * \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::YEARS_PER_DECADE;
+                    $years += $intValue * CarbonInterface::YEARS_PER_DECADE;
                     break;
                 case 'year':
                 case 'years':
                 case 'y':
+                case 'yr':
+                case 'yrs':
                     $years += $intValue;
                     break;
                 case 'quarter':
                 case 'quarters':
-                    $months += $intValue * \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::MONTHS_PER_QUARTER;
+                    $months += $intValue * CarbonInterface::MONTHS_PER_QUARTER;
                     break;
                 case 'month':
                 case 'months':
                 case 'mo':
+                case 'mos':
                     $months += $intValue;
                     break;
                 case 'week':
@@ -672,7 +803,7 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
                     throw new InvalidIntervalException(\sprintf('Invalid part %s in definition %s', $part, $intervalDefinition));
             }
         }
-        return new static($years, $months, $weeks, $days, $hours, $minutes, $seconds, $milliseconds * \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND + $microseconds);
+        return new static($years, $months, $weeks, $days, $hours, $minutes, $seconds, $milliseconds * Carbon::MICROSECONDS_PER_MILLISECOND + $microseconds);
     }
     /**
      * Creates a CarbonInterval from string using a different locale.
@@ -684,23 +815,23 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      */
     public static function parseFromLocale($interval, $locale = null)
     {
-        return static::fromString(\SimpleCalendar\plugin_deps\Carbon\Carbon::translateTimeString($interval, $locale ?: static::getLocale(), 'en'));
+        return static::fromString(Carbon::translateTimeString($interval, $locale ?: static::getLocale(), 'en'));
     }
-    private static function castIntervalToClass(DateInterval $interval, string $className)
+    private static function castIntervalToClass(DateInterval $interval, string $className, array $skip = [])
     {
         $mainClass = DateInterval::class;
         if (!\is_a($className, $mainClass, \true)) {
             throw new InvalidCastException("{$className} is not a sub-class of {$mainClass}.");
         }
         $microseconds = $interval->f;
-        $instance = new $className(static::getDateIntervalSpec($interval));
+        $instance = new $className(static::getDateIntervalSpec($interval, \false, $skip));
         if ($microseconds) {
             $instance->f = $microseconds;
         }
         if ($interval instanceof self && \is_a($className, self::class, \true)) {
-            static::copyStep($interval, $instance);
+            self::copyStep($interval, $instance);
         }
-        static::copyNegativeUnits($interval, $instance);
+        self::copyNegativeUnits($interval, $instance);
         return $instance;
     }
     private static function copyNegativeUnits(DateInterval $from, DateInterval $to) : void
@@ -733,12 +864,18 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      * set the $days field.
      *
      * @param DateInterval $interval
+     * @param bool         $skipCopy set to true to return the passed object
+     *                               (without copying it) if it's already of the
+     *                               current class
      *
      * @return static
      */
-    public static function instance(DateInterval $interval)
+    public static function instance(DateInterval $interval, array $skip = [], bool $skipCopy = \false)
     {
-        return self::castIntervalToClass($interval, static::class);
+        if ($skipCopy && $interval instanceof static) {
+            return $interval;
+        }
+        return self::castIntervalToClass($interval, static::class, $skip);
     }
     /**
      * Make a CarbonInterval instance from given variable if possible.
@@ -748,16 +885,19 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      *
      * @param mixed|int|DateInterval|string|Closure|null $interval interval or number of the given $unit
      * @param string|null                                $unit     if specified, $interval must be an integer
+     * @param bool                                       $skipCopy set to true to return the passed object
+     *                                                             (without copying it) if it's already of the
+     *                                                             current class
      *
      * @return static|null
      */
-    public static function make($interval, $unit = null)
+    public static function make($interval, $unit = null, bool $skipCopy = \false)
     {
         if ($unit) {
-            $interval = "{$interval} " . \SimpleCalendar\plugin_deps\Carbon\Carbon::pluralUnit($unit);
+            $interval = "{$interval} " . Carbon::pluralUnit($unit);
         }
         if ($interval instanceof DateInterval) {
-            return static::instance($interval);
+            return static::instance($interval, [], $skipCopy);
         }
         if ($interval instanceof Closure) {
             return new static($interval);
@@ -770,14 +910,20 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
     protected static function makeFromString(string $interval)
     {
         $interval = \preg_replace('/\\s+/', ' ', \trim($interval));
-        if (\preg_match('/^P[T0-9]/', $interval)) {
+        if (\preg_match('/^P[T\\d]/', $interval)) {
             return new static($interval);
         }
         if (\preg_match('/^(?:\\h*\\d+(?:\\.\\d+)?\\h*[a-z]+)+$/i', $interval)) {
             return static::fromString($interval);
         }
-        /** @var static $interval */
-        $interval = static::createFromDateString($interval);
+        // @codeCoverageIgnoreStart
+        try {
+            /** @var static $interval */
+            $interval = static::createFromDateString($interval);
+        } catch (DateMalformedIntervalStringException $e) {
+            return null;
+        }
+        // @codeCoverageIgnoreEnd
         return !$interval || $interval->isEmpty() ? null : $interval;
     }
     protected function resolveInterval($interval)
@@ -794,8 +940,9 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      *
      * @return static
      *
-     * @link http://php.net/manual/en/dateinterval.createfromdatestring.php
+     * @link https://php.net/manual/en/dateinterval.createfromdatestring.php
      */
+    #[ReturnTypeWillChange]
     public static function createFromDateString($time)
     {
         $interval = @parent::createFromDateString(\strtr($time, [',' => ' ', ' and ' => ' ']));
@@ -818,7 +965,7 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      */
     public function get($name)
     {
-        if (\substr($name, 0, 5) === 'total') {
+        if (\str_starts_with($name, 'total')) {
             return $this->total(\substr($name, 5));
         }
         switch ($name) {
@@ -836,17 +983,17 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
                 return $this->s;
             case 'milli':
             case 'milliseconds':
-                return (int) (\round($this->f * \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_SECOND) / \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND);
+                return (int) (\round($this->f * Carbon::MICROSECONDS_PER_SECOND) / Carbon::MICROSECONDS_PER_MILLISECOND);
             case 'micro':
             case 'microseconds':
-                return (int) \round($this->f * \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_SECOND);
+                return (int) \round($this->f * Carbon::MICROSECONDS_PER_SECOND);
             case 'microExcludeMilli':
-                return (int) \round($this->f * \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_SECOND) % \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND;
+                return (int) \round($this->f * Carbon::MICROSECONDS_PER_SECOND) % Carbon::MICROSECONDS_PER_MILLISECOND;
             case 'weeks':
-                return (int) ($this->d / static::getDaysPerWeek());
+                return (int) ($this->d / (int) static::getDaysPerWeek());
             case 'daysExcludeWeeks':
             case 'dayzExcludeWeeks':
-                return $this->d % static::getDaysPerWeek();
+                return $this->d % (int) static::getDaysPerWeek();
             case 'locale':
                 return $this->getTranslatorLocale();
             default:
@@ -880,42 +1027,62 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
     {
         $properties = \is_array($name) ? $name : [$name => $value];
         foreach ($properties as $key => $value) {
-            switch (\SimpleCalendar\plugin_deps\Carbon\Carbon::singularUnit(\rtrim($key, 'z'))) {
+            switch (Carbon::singularUnit(\rtrim($key, 'z'))) {
                 case 'year':
+                    $this->checkIntegerValue($key, $value);
                     $this->y = $value;
+                    $this->handleDecimalPart('year', $value, $this->y);
                     break;
                 case 'month':
+                    $this->checkIntegerValue($key, $value);
                     $this->m = $value;
+                    $this->handleDecimalPart('month', $value, $this->m);
                     break;
                 case 'week':
-                    $this->d = $value * static::getDaysPerWeek();
+                    $this->checkIntegerValue($key, $value);
+                    $days = $value * (int) static::getDaysPerWeek();
+                    $this->assertSafeForInteger('days total (including weeks)', $days);
+                    $this->d = $days;
+                    $this->handleDecimalPart('day', $days, $this->d);
                     break;
                 case 'day':
+                    $this->checkIntegerValue($key, $value);
                     $this->d = $value;
+                    $this->handleDecimalPart('day', $value, $this->d);
                     break;
                 case 'daysexcludeweek':
                 case 'dayzexcludeweek':
-                    $this->d = $this->weeks * static::getDaysPerWeek() + $value;
+                    $this->checkIntegerValue($key, $value);
+                    $days = $this->weeks * (int) static::getDaysPerWeek() + $value;
+                    $this->assertSafeForInteger('days total (including weeks)', $days);
+                    $this->d = $days;
+                    $this->handleDecimalPart('day', $days, $this->d);
                     break;
                 case 'hour':
+                    $this->checkIntegerValue($key, $value);
                     $this->h = $value;
+                    $this->handleDecimalPart('hour', $value, $this->h);
                     break;
                 case 'minute':
+                    $this->checkIntegerValue($key, $value);
                     $this->i = $value;
+                    $this->handleDecimalPart('minute', $value, $this->i);
                     break;
                 case 'second':
+                    $this->checkIntegerValue($key, $value);
                     $this->s = $value;
+                    $this->handleDecimalPart('second', $value, $this->s);
                     break;
                 case 'milli':
                 case 'millisecond':
-                    $this->microseconds = $value * \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND + $this->microseconds % \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND;
+                    $this->microseconds = $value * Carbon::MICROSECONDS_PER_MILLISECOND + $this->microseconds % Carbon::MICROSECONDS_PER_MILLISECOND;
                     break;
                 case 'micro':
                 case 'microsecond':
-                    $this->f = $value / \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_SECOND;
+                    $this->f = $value / Carbon::MICROSECONDS_PER_SECOND;
                     break;
                 default:
-                    if ($this->localStrictModeEnabled ?? \SimpleCalendar\plugin_deps\Carbon\Carbon::isStrictModeEnabled()) {
+                    if ($this->localStrictModeEnabled ?? Carbon::isStrictModeEnabled()) {
                         throw new UnknownSetterException($key);
                     }
                     $this->{$key} = $value;
@@ -1067,12 +1234,14 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
             return $roundedValue;
         }
         if (\preg_match('/^(?<method>add|sub)(?<unit>[A-Z].*)$/', $method, $match)) {
-            return $this->{$match['method']}($parameters[0], $match['unit']);
+            $value = $this->getMagicParameter($parameters, 0, Carbon::pluralUnit($match['unit']), 0);
+            return $this->{$match['method']}($value, $match['unit']);
         }
+        $value = $this->getMagicParameter($parameters, 0, Carbon::pluralUnit($method), 1);
         try {
-            $this->set($method, \count($parameters) === 0 ? 1 : $parameters[0]);
+            $this->set($method, $value);
         } catch (UnknownSetterException $exception) {
-            if ($this->localStrictModeEnabled ?? \SimpleCalendar\plugin_deps\Carbon\Carbon::isStrictModeEnabled()) {
+            if ($this->localStrictModeEnabled ?? Carbon::isStrictModeEnabled()) {
                 throw new BadFluentSetterException($method, 0, $exception);
             }
         }
@@ -1087,7 +1256,7 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
             return ['parts' => $short, 'short' => \false];
         }
         if (\is_bool($syntax)) {
-            return ['short' => $syntax, 'syntax' => \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::DIFF_ABSOLUTE];
+            return ['short' => $syntax, 'syntax' => CarbonInterface::DIFF_ABSOLUTE];
         }
         return [];
     }
@@ -1107,14 +1276,18 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         $altNumbers = \false;
         $aUnit = \false;
         $minimumUnit = 's';
+        $skip = [];
         \extract($this->getForHumansInitialVariables($syntax, $short));
-        if (\is_null($syntax)) {
-            $syntax = \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::DIFF_ABSOLUTE;
+        $skip = \array_map('strtolower', \array_filter((array) $skip, static function ($value) {
+            return \is_string($value) && $value !== '';
+        }));
+        if ($syntax === null) {
+            $syntax = CarbonInterface::DIFF_ABSOLUTE;
         }
         if ($parts === -1) {
             $parts = \INF;
         }
-        if (\is_null($options)) {
+        if ($options === null) {
             $options = static::getHumanDiffOptions();
         }
         if ($join === \false) {
@@ -1122,11 +1295,9 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         } elseif ($join === \true) {
             $join = [$default, $this->getTranslationMessage('list.1') ?? $default];
         }
-        if ($altNumbers) {
-            if ($altNumbers !== \true) {
-                $language = new \SimpleCalendar\plugin_deps\Carbon\Language($this->locale);
-                $altNumbers = \in_array($language->getCode(), (array) $altNumbers);
-            }
+        if ($altNumbers && $altNumbers !== \true) {
+            $language = new Language($this->locale);
+            $altNumbers = \in_array($language->getCode(), (array) $altNumbers, \true);
         }
         if (\is_array($join)) {
             [$default, $last] = $join;
@@ -1151,17 +1322,17 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
             };
         }
         $interpolations = [':optional-space' => $optionalSpace];
-        return [$syntax, $short, $parts, $options, $join, $aUnit, $altNumbers, $interpolations, $minimumUnit];
+        return [$syntax, $short, $parts, $options, $join, $aUnit, $altNumbers, $interpolations, $minimumUnit, $skip];
     }
     protected static function getRoundingMethodFromOptions(int $options) : ?string
     {
-        if ($options & \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::ROUND) {
+        if ($options & CarbonInterface::ROUND) {
             return 'round';
         }
-        if ($options & \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::CEIL) {
+        if ($options & CarbonInterface::CEIL) {
             return 'ceil';
         }
-        if ($options & \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::FLOOR) {
+        if ($options & CarbonInterface::FLOOR) {
             return 'floor';
         }
         return null;
@@ -1232,6 +1403,9 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      *                           - 'short' entry (see below)
      *                           - 'parts' entry (see below)
      *                           - 'options' entry (see below)
+     *                           - 'skip' entry, list of units to skip (array of strings or a single string,
+     *                           ` it can be the unit name (singular or plural) or its shortcut
+     *                           ` (y, m, w, d, h, min, s, ms, µs).
      *                           - 'aUnit' entry, prefer "an hour" over "1 hour" if true
      *                           - 'join' entry determines how to join multiple parts of the string
      *                           `  - if $join is a string, it's used as a joiner glue
@@ -1258,24 +1432,28 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      */
     public function forHumans($syntax = null, $short = \false, $parts = -1, $options = null)
     {
-        [$syntax, $short, $parts, $options, $join, $aUnit, $altNumbers, $interpolations, $minimumUnit] = $this->getForHumansParameters($syntax, $short, $parts, $options);
+        [$syntax, $short, $parts, $options, $join, $aUnit, $altNumbers, $interpolations, $minimumUnit, $skip] = $this->getForHumansParameters($syntax, $short, $parts, $options);
         $interval = [];
-        $syntax = (int) ($syntax === null ? \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::DIFF_ABSOLUTE : $syntax);
-        $absolute = $syntax === \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::DIFF_ABSOLUTE;
-        $relativeToNow = $syntax === \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW;
+        $syntax = (int) ($syntax ?? CarbonInterface::DIFF_ABSOLUTE);
+        $absolute = $syntax === CarbonInterface::DIFF_ABSOLUTE;
+        $relativeToNow = $syntax === CarbonInterface::DIFF_RELATIVE_TO_NOW;
         $count = 1;
         $unit = $short ? 's' : 'second';
         $isFuture = $this->invert === 1;
         $transId = $relativeToNow ? $isFuture ? 'from_now' : 'ago' : ($isFuture ? 'after' : 'before');
+        $declensionMode = null;
         /** @var \Symfony\Component\Translation\Translator $translator */
         $translator = $this->getLocalTranslator();
-        $handleDeclensions = function ($unit, $count) use($interpolations, $transId, $translator, $altNumbers, $absolute) {
+        $handleDeclensions = function ($unit, $count, $index = 0, $parts = 1) use($interpolations, $transId, $translator, $altNumbers, $absolute, &$declensionMode) {
             if (!$absolute) {
-                // Some languages have special pluralization for past and future tense.
-                $key = $unit . '_' . $transId;
-                $result = $this->translate($key, $interpolations, $count, $translator, $altNumbers);
-                if ($result !== $key) {
-                    return $result;
+                $declensionMode = $declensionMode ?? $this->translate($transId . '_mode');
+                if ($this->needsDeclension($declensionMode, $index, $parts)) {
+                    // Some languages have special pluralization for past and future tense.
+                    $key = $unit . '_' . $transId;
+                    $result = $this->translate($key, $interpolations, $count, $translator, $altNumbers);
+                    if ($result !== $key) {
+                        return $result;
+                    }
                 }
             }
             $result = $this->translate($unit, $interpolations, $count, $translator, $altNumbers);
@@ -1289,26 +1467,39 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         if ($method) {
             $previousCount = \INF;
             while (\count($intervalValues->getNonZeroValues()) > $parts && ($count = \count($keys = \array_keys($intervalValues->getValuesSequence()))) > 1) {
-                $intervalValues = $this->copy()->roundUnit($keys[\min($count, $previousCount - 1) - 2], 1, $method);
+                $index = \min($count, $previousCount - 1) - 2;
+                if ($index < 0) {
+                    break;
+                }
+                $intervalValues = $this->copy()->roundUnit($keys[$index], 1, $method);
                 $previousCount = $count;
             }
         }
         $diffIntervalArray = [['value' => $intervalValues->years, 'unit' => 'year', 'unitShort' => 'y'], ['value' => $intervalValues->months, 'unit' => 'month', 'unitShort' => 'm'], ['value' => $intervalValues->weeks, 'unit' => 'week', 'unitShort' => 'w'], ['value' => $intervalValues->daysExcludeWeeks, 'unit' => 'day', 'unitShort' => 'd'], ['value' => $intervalValues->hours, 'unit' => 'hour', 'unitShort' => 'h'], ['value' => $intervalValues->minutes, 'unit' => 'minute', 'unitShort' => 'min'], ['value' => $intervalValues->seconds, 'unit' => 'second', 'unitShort' => 's'], ['value' => $intervalValues->milliseconds, 'unit' => 'millisecond', 'unitShort' => 'ms'], ['value' => $intervalValues->microExcludeMilli, 'unit' => 'microsecond', 'unitShort' => 'µs']];
-        $transChoice = function ($short, $unitData) use($absolute, $handleDeclensions, $translator, $aUnit, $altNumbers, $interpolations) {
+        if (!empty($skip)) {
+            foreach ($diffIntervalArray as $index => &$unitData) {
+                $nextIndex = $index + 1;
+                if ($unitData['value'] && isset($diffIntervalArray[$nextIndex]) && \count(\array_intersect([$unitData['unit'], $unitData['unit'] . 's', $unitData['unitShort']], $skip))) {
+                    $diffIntervalArray[$nextIndex]['value'] += $unitData['value'] * self::getFactorWithDefault($diffIntervalArray[$nextIndex]['unit'], $unitData['unit']);
+                    $unitData['value'] = 0;
+                }
+            }
+        }
+        $transChoice = function ($short, $unitData, $index, $parts) use($absolute, $handleDeclensions, $translator, $aUnit, $altNumbers, $interpolations) {
             $count = $unitData['value'];
             if ($short) {
-                $result = $handleDeclensions($unitData['unitShort'], $count);
+                $result = $handleDeclensions($unitData['unitShort'], $count, $index, $parts);
                 if ($result !== null) {
                     return $result;
                 }
             } elseif ($aUnit) {
-                $result = $handleDeclensions('a_' . $unitData['unit'], $count);
+                $result = $handleDeclensions('a_' . $unitData['unit'], $count, $index, $parts);
                 if ($result !== null) {
                     return $result;
                 }
             }
             if (!$absolute) {
-                return $handleDeclensions($unitData['unit'], $count);
+                return $handleDeclensions($unitData['unit'], $count, $index, $parts);
             }
             return $this->translate($unitData['unit'], $interpolations, $count, $translator, $altNumbers);
         };
@@ -1317,8 +1508,8 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
             if ($diffIntervalData['value'] > 0) {
                 $unit = $short ? $diffIntervalData['unitShort'] : $diffIntervalData['unit'];
                 $count = $diffIntervalData['value'];
-                $interval[] = $transChoice($short, $diffIntervalData);
-            } elseif ($options & \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::SEQUENTIAL_PARTS_ONLY && \count($interval) > 0) {
+                $interval[] = [$short, $diffIntervalData];
+            } elseif ($options & CarbonInterface::SEQUENTIAL_PARTS_ONLY && \count($interval) > 0) {
                 break;
             }
             // break the loop after we get the required number of parts in array
@@ -1326,20 +1517,24 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
                 break;
             }
             // break the loop after we have reached the minimum unit
-            if (\in_array($minimumUnit, [$diffIntervalData['unit'], $diffIntervalData['unitShort']])) {
+            if (\in_array($minimumUnit, [$diffIntervalData['unit'], $diffIntervalData['unitShort']], \true)) {
                 $fallbackUnit = [$diffIntervalData['unit'], $diffIntervalData['unitShort']];
                 break;
             }
         }
+        $actualParts = \count($interval);
+        foreach ($interval as $index => &$item) {
+            $item = $transChoice($item[0], $item[1], $index, $actualParts);
+        }
         if (\count($interval) === 0) {
-            if ($relativeToNow && $options & \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::JUST_NOW) {
+            if ($relativeToNow && $options & CarbonInterface::JUST_NOW) {
                 $key = 'diff_now';
                 $translation = $this->translate($key, $interpolations, null, $translator);
                 if ($translation !== $key) {
                     return $translation;
                 }
             }
-            $count = $options & \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::NO_ZERO_DIFF ? 1 : 0;
+            $count = $options & CarbonInterface::NO_ZERO_DIFF ? 1 : 0;
             $unit = $fallbackUnit[$short ? 1 : 0];
             $interval[] = $this->translate($unit, $interpolations, $count, $translator, $altNumbers);
         }
@@ -1353,14 +1548,14 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         $transId = $relativeToNow ? $isFuture ? 'from_now' : 'ago' : ($isFuture ? 'after' : 'before');
         if ($parts === 1) {
             if ($relativeToNow && $unit === 'day') {
-                if ($count === 1 && $options & \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::ONE_DAY_WORDS) {
+                if ($count === 1 && $options & CarbonInterface::ONE_DAY_WORDS) {
                     $key = $isFuture ? 'diff_tomorrow' : 'diff_yesterday';
                     $translation = $this->translate($key, $interpolations, null, $translator);
                     if ($translation !== $key) {
                         return $translation;
                     }
                 }
-                if ($count === 2 && $options & \SimpleCalendar\plugin_deps\Carbon\CarbonInterface::TWO_DAY_WORDS) {
+                if ($count === 2 && $options & CarbonInterface::TWO_DAY_WORDS) {
                     $key = $isFuture ? 'diff_after_tomorrow' : 'diff_before_yesterday';
                     $translation = $this->translate($key, $interpolations, null, $translator);
                     if ($translation !== $key) {
@@ -1383,14 +1578,14 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      */
     public function __toString()
     {
-        $format = $this->localToStringFormat;
-        if ($format) {
-            if ($format instanceof Closure) {
-                return $format($this);
-            }
-            return $this->format($format);
+        $format = $this->localToStringFormat ?? static::$toStringFormat;
+        if (!$format) {
+            return $this->forHumans();
         }
-        return $this->forHumans();
+        if ($format instanceof Closure) {
+            return $format($this);
+        }
+        return $this->format($format);
     }
     /**
      * Return native DateInterval PHP object matching the current instance.
@@ -1409,18 +1604,24 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
     /**
      * Convert the interval to a CarbonPeriod.
      *
-     * @param array ...$params Start date, [end date or recurrences] and optional settings.
+     * @param DateTimeInterface|string|int ...$params Start date, [end date or recurrences] and optional settings.
      *
      * @return CarbonPeriod
      */
     public function toPeriod(...$params)
     {
-        return \SimpleCalendar\plugin_deps\Carbon\CarbonPeriod::create($this, ...$params);
+        if ($this->tzName) {
+            $tz = \is_string($this->tzName) ? new DateTimeZone($this->tzName) : $this->tzName;
+            if ($tz instanceof DateTimeZone) {
+                \array_unshift($params, $tz);
+            }
+        }
+        return CarbonPeriod::create($this, ...$params);
     }
     /**
      * Invert the interval.
      *
-     * @param bool|int $inverted if a parameter is passed, the passed value casted as 1 or 0 is used
+     * @param bool|int $inverted if a parameter is passed, the passed value cast as 1 or 0 is used
      *                           as the new value of the ->invert property.
      *
      * @return $this
@@ -1492,7 +1693,7 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         if (\is_numeric($unit)) {
             [$value, $unit] = [$unit, $value];
         }
-        return $this->add($unit, -\floatval($value));
+        return $this->add($unit, -(float) $value);
     }
     /**
      * Subtract the passed interval to the current instance.
@@ -1509,8 +1710,8 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
     /**
      * Add given parameters to the current interval.
      *
-     * @param int $years
-     * @param int $months
+     * @param int       $years
+     * @param int       $months
      * @param int|float $weeks
      * @param int|float $days
      * @param int|float $hours
@@ -1527,8 +1728,8 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
     /**
      * Add given parameters to the current interval.
      *
-     * @param int $years
-     * @param int $months
+     * @param int       $years
+     * @param int       $months
      * @param int|float $weeks
      * @param int|float $days
      * @param int|float $hours
@@ -1643,10 +1844,17 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      *
      * @return string
      */
-    public static function getDateIntervalSpec(DateInterval $interval)
+    public static function getDateIntervalSpec(DateInterval $interval, bool $microseconds = \false, array $skip = [])
     {
         $date = \array_filter([static::PERIOD_YEARS => \abs($interval->y), static::PERIOD_MONTHS => \abs($interval->m), static::PERIOD_DAYS => \abs($interval->d)]);
-        $time = \array_filter([static::PERIOD_HOURS => \abs($interval->h), static::PERIOD_MINUTES => \abs($interval->i), static::PERIOD_SECONDS => \abs($interval->s)]);
+        if ($interval->days >= CarbonInterface::DAYS_PER_WEEK * CarbonInterface::WEEKS_PER_MONTH && (!isset($date[static::PERIOD_YEARS]) || \count(\array_intersect(['y', 'year', 'years'], $skip))) && (!isset($date[static::PERIOD_MONTHS]) || \count(\array_intersect(['m', 'month', 'months'], $skip)))) {
+            $date = [static::PERIOD_DAYS => \abs($interval->days)];
+        }
+        $seconds = \abs($interval->s);
+        if ($microseconds && $interval->f > 0) {
+            $seconds = \sprintf('%d.%06d', $seconds, \abs($interval->f) * 1000000);
+        }
+        $time = \array_filter([static::PERIOD_HOURS => \abs($interval->h), static::PERIOD_MINUTES => \abs($interval->i), static::PERIOD_SECONDS => $seconds]);
         $specString = static::PERIOD_PREFIX;
         foreach ($date as $key => $value) {
             $specString .= $value . $key;
@@ -1664,9 +1872,9 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      *
      * @return string
      */
-    public function spec()
+    public function spec(bool $microseconds = \false)
     {
-        return static::getDateIntervalSpec($this);
+        return static::getDateIntervalSpec($this, $microseconds);
     }
     /**
      * Comparing 2 date intervals.
@@ -1678,8 +1886,8 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      */
     public static function compareDateIntervals(DateInterval $first, DateInterval $second)
     {
-        $current = \SimpleCalendar\plugin_deps\Carbon\Carbon::now();
-        $passed = $current->copy()->add($second);
+        $current = Carbon::now();
+        $passed = $current->avoidMutation()->add($second);
         $current->add($first);
         if ($current < $passed) {
             return -1;
@@ -1711,19 +1919,35 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         $originalData = $this->toArray();
         $originalData['milliseconds'] = (int) ($originalData['microseconds'] / static::getMicrosecondsPerMillisecond());
         $originalData['microseconds'] = $originalData['microseconds'] % static::getMicrosecondsPerMillisecond();
-        $originalData['daysExcludeWeeks'] = $originalData['days'];
+        $originalData['weeks'] = (int) ($this->d / static::getDaysPerWeek());
+        $originalData['daysExcludeWeeks'] = \fmod($this->d, static::getDaysPerWeek());
         unset($originalData['days']);
         $newData = $originalData;
-        foreach (static::getFlipCascadeFactors() as $source => [$target, $factor]) {
+        $previous = [];
+        foreach (self::getFlipCascadeFactors() as $source => [$target, $factor]) {
             foreach (['source', 'target'] as $key) {
                 if (${$key} === 'dayz') {
                     ${$key} = 'daysExcludeWeeks';
                 }
             }
             $value = $newData[$source];
-            $modulo = ($factor + $value % $factor) % $factor;
+            $modulo = \fmod($factor + \fmod($value, $factor), $factor);
             $newData[$source] = $modulo;
             $newData[$target] += ($value - $modulo) / $factor;
+            $decimalPart = \fmod($newData[$source], 1);
+            if ($decimalPart !== 0.0) {
+                $unit = $source;
+                foreach ($previous as [$subUnit, $subFactor]) {
+                    $newData[$unit] -= $decimalPart;
+                    $newData[$subUnit] += $decimalPart * $subFactor;
+                    $decimalPart = \fmod($newData[$subUnit], 1);
+                    if ($decimalPart === 0.0) {
+                        break;
+                    }
+                    $unit = $subUnit;
+                }
+            }
+            \array_unshift($previous, [$source, $factor]);
         }
         $positive = null;
         if (!$deep) {
@@ -1788,9 +2012,9 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
         $result = 0;
         $cumulativeFactor = 0;
         $unitFound = \false;
-        $factors = static::getFlipCascadeFactors();
-        $daysPerWeek = static::getDaysPerWeek();
-        $values = ['years' => $this->years, 'months' => $this->months, 'weeks' => (int) ($this->d / $daysPerWeek), 'dayz' => (int) ($this->d % $daysPerWeek), 'hours' => $this->hours, 'minutes' => $this->minutes, 'seconds' => $this->seconds, 'milliseconds' => (int) ($this->microseconds / \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND), 'microseconds' => (int) ($this->microseconds % \SimpleCalendar\plugin_deps\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND)];
+        $factors = self::getFlipCascadeFactors();
+        $daysPerWeek = (int) static::getDaysPerWeek();
+        $values = ['years' => $this->years, 'months' => $this->months, 'weeks' => (int) ($this->d / $daysPerWeek), 'dayz' => \fmod($this->d, $daysPerWeek), 'hours' => $this->hours, 'minutes' => $this->minutes, 'seconds' => $this->seconds, 'milliseconds' => (int) ($this->microseconds / Carbon::MICROSECONDS_PER_MILLISECOND), 'microseconds' => $this->microseconds % Carbon::MICROSECONDS_PER_MILLISECOND];
         if (isset($factors['dayz']) && $factors['dayz'][0] !== 'weeks') {
             $values['dayz'] += $values['weeks'] * $daysPerWeek;
             $values['weeks'] = 0;
@@ -1831,9 +2055,10 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
             $result *= -1;
         }
         if ($unit === 'weeks') {
-            return $result / $daysPerWeek;
+            $result /= $daysPerWeek;
         }
-        return $result;
+        // Cast as int numbers with no decimal part
+        return \fmod($result, 1) === 0.0 ? (int) $result : $result;
     }
     /**
      * Determines if the instance is equal to another
@@ -2079,7 +2304,12 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
      */
     public function roundUnit($unit, $precision = 1, $function = 'round')
     {
-        $base = \SimpleCalendar\plugin_deps\Carbon\CarbonImmutable::parse('2000-01-01 00:00:00', 'UTC')->roundUnit($unit, $precision, $function);
+        if (static::getCascadeFactors() !== static::getDefaultCascadeFactors()) {
+            $value = $function($this->total($unit) / $precision) * $precision;
+            $inverted = $value < 0;
+            return $this->copyProperties(self::fromString(\number_format(\abs($value), 12, '.', '') . ' ' . $unit)->invert($inverted)->cascade());
+        }
+        $base = CarbonImmutable::parse('2000-01-01 00:00:00', 'UTC')->roundUnit($unit, $precision, $function);
         $next = $base->add($this);
         $inverted = $next < $base;
         if ($inverted) {
@@ -2155,5 +2385,59 @@ class CarbonInterval extends DateInterval implements \SimpleCalendar\plugin_deps
     public function ceil($precision = 1)
     {
         return $this->round($precision, 'ceil');
+    }
+    private function needsDeclension(string $mode, int $index, int $parts) : bool
+    {
+        switch ($mode) {
+            case 'last':
+                return $index === $parts - 1;
+            default:
+                return \true;
+        }
+    }
+    private function checkIntegerValue(string $name, $value)
+    {
+        if (\is_int($value)) {
+            return;
+        }
+        $this->assertSafeForInteger($name, $value);
+        if (\is_float($value) && (float) (int) $value === $value) {
+            return;
+        }
+        if (!self::$floatSettersEnabled) {
+            $type = \gettype($value);
+            @\trigger_error("Since 2.70.0, it's deprecated to pass {$type} value for {$name}.\n" . "It's truncated when stored as an integer interval unit.\n" . "From 3.0.0, decimal part will no longer be truncated and will be cascaded to smaller units.\n" . "- To maintain the current behavior, use explicit cast: {$name}((int) \$value)\n" . "- To adopt the new behavior globally, call CarbonInterval::enableFloatSetters()\n", \E_USER_DEPRECATED);
+        }
+    }
+    /**
+     * Throw an exception if precision loss when storing the given value as an integer would be >= 1.0.
+     */
+    private function assertSafeForInteger(string $name, $value)
+    {
+        if ($value && !\is_int($value) && ($value >= 0x7fffffffffffffff || $value <= -0x7fffffffffffffff)) {
+            throw new OutOfRangeException($name, -0x7fffffffffffffff, 0x7fffffffffffffff, $value);
+        }
+    }
+    private function handleDecimalPart(string $unit, $value, $integerValue)
+    {
+        if (self::$floatSettersEnabled) {
+            $floatValue = (float) $value;
+            $base = (float) $integerValue;
+            if ($floatValue === $base) {
+                return;
+            }
+            $units = ['y' => 'year', 'm' => 'month', 'd' => 'day', 'h' => 'hour', 'i' => 'minute', 's' => 'second'];
+            $upper = \true;
+            foreach ($units as $property => $name) {
+                if ($name === $unit) {
+                    $upper = \false;
+                    continue;
+                }
+                if (!$upper && $this->{$property} !== 0) {
+                    throw new RuntimeException("You cannot set {$unit} to a float value as {$name} would be overridden, " . 'set it first to 0 explicitly if you really want to erase its value');
+                }
+            }
+            $this->add($unit, $floatValue - $base);
+        }
     }
 }

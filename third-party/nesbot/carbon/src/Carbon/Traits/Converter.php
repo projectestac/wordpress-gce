@@ -15,10 +15,12 @@ use SimpleCalendar\plugin_deps\Carbon\CarbonImmutable;
 use SimpleCalendar\plugin_deps\Carbon\CarbonInterface;
 use SimpleCalendar\plugin_deps\Carbon\CarbonInterval;
 use SimpleCalendar\plugin_deps\Carbon\CarbonPeriod;
+use SimpleCalendar\plugin_deps\Carbon\CarbonPeriodImmutable;
 use SimpleCalendar\plugin_deps\Carbon\Exceptions\UnitException;
 use Closure;
 use DateTime;
 use DateTimeImmutable;
+use ReturnTypeWillChange;
 /**
  * Trait Converter.
  *
@@ -31,37 +33,7 @@ use DateTimeImmutable;
  */
 trait Converter
 {
-    /**
-     * Format to use for __toString method when type juggling occurs.
-     *
-     * @var string|Closure|null
-     */
-    protected static $toStringFormat = null;
-    /**
-     * Reset the format used to the default when type juggling a Carbon instance to a string
-     *
-     * @return void
-     */
-    public static function resetToStringFormat()
-    {
-        static::setToStringFormat(null);
-    }
-    /**
-     * @deprecated To avoid conflict between different third-party libraries, static setters should not be used.
-     *             You should rather let Carbon object being casted to string with DEFAULT_TO_STRING_FORMAT, and
-     *             use other method or custom format passed to format() method if you need to dump an other string
-     *             format.
-     *
-     * Set the default format used when type juggling a Carbon instance to a string
-     *
-     * @param string|Closure|null $format
-     *
-     * @return void
-     */
-    public static function setToStringFormat($format)
-    {
-        static::$toStringFormat = $format;
-    }
+    use ToStringFormat;
     /**
      * Returns the formatted date string on success or FALSE on failure.
      *
@@ -71,6 +43,7 @@ trait Converter
      *
      * @return string
      */
+    #[ReturnTypeWillChange]
     public function format($format)
     {
         $function = $this->localFormatFunction ?: static::$formatFunction;
@@ -98,7 +71,7 @@ trait Converter
      *
      * @example
      * ```
-     * echo Carbon::now(); // Carbon instances can be casted to string
+     * echo Carbon::now(); // Carbon instances can be cast to string
      * ```
      *
      * @return string
@@ -135,6 +108,20 @@ trait Converter
     public function toFormattedDateString()
     {
         return $this->rawFormat('M j, Y');
+    }
+    /**
+     * Format the instance with the day, and a readable date
+     *
+     * @example
+     * ```
+     * echo Carbon::now()->toFormattedDayDateString();
+     * ```
+     *
+     * @return string
+     */
+    public function toFormattedDayDateString() : string
+    {
+        return $this->rawFormat('D, M j, Y');
     }
     /**
      * Format the instance as time
@@ -293,7 +280,7 @@ trait Converter
      */
     public function toIso8601ZuluString($unitPrecision = 'second')
     {
-        return $this->copy()->utc()->rawFormat('Y-m-d\\T' . static::getTimeFormatByPrecision($unitPrecision) . '\\Z');
+        return $this->avoidMutation()->utc()->rawFormat('Y-m-d\\T' . static::getTimeFormatByPrecision($unitPrecision) . '\\Z');
     }
     /**
      * Format the instance as RFC850
@@ -412,7 +399,7 @@ trait Converter
      */
     public function toRfc7231String()
     {
-        return $this->copy()->setTimezone('GMT')->rawFormat(\defined('static::RFC7231_FORMAT') ? static::RFC7231_FORMAT : CarbonInterface::RFC7231_FORMAT);
+        return $this->avoidMutation()->setTimezone('GMT')->rawFormat(\defined('static::RFC7231_FORMAT') ? static::RFC7231_FORMAT : CarbonInterface::RFC7231_FORMAT);
     }
     /**
      * Get default array representation.
@@ -454,7 +441,7 @@ trait Converter
      */
     public function toString()
     {
-        return $this->copy()->locale('en')->isoFormat('ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
+        return $this->avoidMutation()->locale('en')->isoFormat('ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
     }
     /**
      * Return the ISO-8601 string (ex: 1977-04-22T06:00:00Z, if $keepOffset truthy, offset will be kept:
@@ -477,7 +464,7 @@ trait Converter
         }
         $yearFormat = $this->year < 0 || $this->year > 9999 ? 'YYYYYY' : 'YYYY';
         $tzFormat = $keepOffset ? 'Z' : '[Z]';
-        $date = $keepOffset ? $this : $this->copy()->utc();
+        $date = $keepOffset ? $this : $this->avoidMutation()->utc();
         return $date->isoFormat("{$yearFormat}-MM-DD[T]HH:mm:ss.SSSSSS{$tzFormat}");
     }
     /**
@@ -552,14 +539,14 @@ trait Converter
         if ($unit) {
             $interval = CarbonInterval::make("{$interval} " . static::pluralUnit($unit));
         }
-        $period = (new CarbonPeriod())->setDateClass(static::class)->setStartDate($this);
+        $period = ($this->isMutable() ? new CarbonPeriod() : new CarbonPeriodImmutable())->setDateClass(static::class)->setStartDate($this);
         if ($interval) {
-            $period->setDateInterval($interval);
+            $period = $period->setDateInterval($interval);
         }
         if (\is_int($end) || \is_string($end) && \ctype_digit($end)) {
-            $period->setRecurrences($end);
+            $period = $period->setRecurrences($end);
         } elseif ($end) {
-            $period->setEndDate($end);
+            $period = $period->setEndDate($end);
         }
         return $period;
     }

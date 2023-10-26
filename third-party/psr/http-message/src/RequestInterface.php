@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace SimpleCalendar\plugin_deps\Psr\Http\Message;
 
 /**
@@ -21,7 +22,7 @@ namespace SimpleCalendar\plugin_deps\Psr\Http\Message;
  * be implemented such that they retain the internal state of the current
  * message and return an instance that contains the changed state.
  */
-interface RequestInterface extends \SimpleCalendar\plugin_deps\Psr\Http\Message\MessageInterface
+interface RequestInterface extends MessageInterface
 {
     /**
      * Retrieves the message's request target.
@@ -54,10 +55,10 @@ interface RequestInterface extends \SimpleCalendar\plugin_deps\Psr\Http\Message\
      *
      * @link http://tools.ietf.org/html/rfc7230#section-5.3 (for the various
      *     request-target forms allowed in request messages)
-     * @param mixed $requestTarget
+     * @param string $requestTarget
      * @return static
      */
-    public function withRequestTarget($requestTarget);
+    public function withRequestTarget(string $requestTarget);
     /**
      * Retrieves the HTTP method of the request.
      *
@@ -79,7 +80,7 @@ interface RequestInterface extends \SimpleCalendar\plugin_deps\Psr\Http\Message\
      * @return static
      * @throws \InvalidArgumentException for invalid HTTP methods.
      */
-    public function withMethod($method);
+    public function withMethod(string $method);
     /**
      * Retrieves the URI instance.
      *
@@ -120,5 +121,5 @@ interface RequestInterface extends \SimpleCalendar\plugin_deps\Psr\Http\Message\
      * @param bool $preserveHost Preserve the original state of the Host header.
      * @return static
      */
-    public function withUri(\SimpleCalendar\plugin_deps\Psr\Http\Message\UriInterface $uri, $preserveHost = \false);
+    public function withUri(UriInterface $uri, bool $preserveHost = \false);
 }

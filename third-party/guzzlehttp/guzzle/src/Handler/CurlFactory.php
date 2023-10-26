@@ -16,7 +16,7 @@ use SimpleCalendar\plugin_deps\Psr\Http\Message\RequestInterface;
  *
  * @final
  */
-class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\CurlFactoryInterface
+class CurlFactory implements CurlFactoryInterface
 {
     public const CURL_VERSION_STR = 'curl_version';
     /**
@@ -38,13 +38,13 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
     {
         $this->maxHandles = $maxHandles;
     }
-    public function create(RequestInterface $request, array $options) : \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle
+    public function create(RequestInterface $request, array $options) : EasyHandle
     {
         if (isset($options['curl']['body_as_string'])) {
             $options['_body_as_string'] = $options['curl']['body_as_string'];
             unset($options['curl']['body_as_string']);
         }
-        $easy = new \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle();
+        $easy = new EasyHandle();
         $easy->request = $request;
         $easy->options = $options;
         $conf = $this->getDefaultConf($easy);
@@ -61,7 +61,7 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
         \curl_setopt_array($easy->handle, $conf);
         return $easy;
     }
-    public function release(\SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy) : void
+    public function release(EasyHandle $easy) : void
     {
         $resource = $easy->handle;
         unset($easy->handle);
@@ -87,7 +87,7 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
      * @param callable(RequestInterface, array): PromiseInterface $handler
      * @param CurlFactoryInterface                                $factory Dictates how the handle is released
      */
-    public static function finish(callable $handler, \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy, \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\CurlFactoryInterface $factory) : PromiseInterface
+    public static function finish(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory) : PromiseInterface
     {
         if (isset($easy->options['on_stats'])) {
             self::invokeStats($easy);
@@ -104,7 +104,7 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
         }
         return new FulfilledPromise($easy->response);
     }
-    private static function invokeStats(\SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy) : void
+    private static function invokeStats(EasyHandle $easy) : void
     {
         $curlStats = \curl_getinfo($easy->handle);
         $curlStats['appconnect_time'] = \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME);
@@ -114,7 +114,7 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
     /**
      * @param callable(RequestInterface, array): PromiseInterface $handler
      */
-    private static function finishError(callable $handler, \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy, \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\CurlFactoryInterface $factory) : PromiseInterface
+    private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory) : PromiseInterface
     {
         // Get error information and release the handle to the factory.
         $ctx = ['errno' => $easy->errno, 'error' => \curl_error($easy->handle), 'appconnect_time' => \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME)] + \curl_getinfo($easy->handle);
@@ -126,7 +126,7 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
         }
         return self::createRejection($easy, $ctx);
     }
-    private static function createRejection(\SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy, array $ctx) : PromiseInterface
+    private static function createRejection(EasyHandle $easy, array $ctx) : PromiseInterface
     {
         static $connectionErrors = [\CURLE_OPERATION_TIMEOUTED => \true, \CURLE_COULDNT_RESOLVE_HOST => \true, \CURLE_COULDNT_CONNECT => \true, \CURLE_SSL_CONNECT_ERROR => \true, \CURLE_GOT_NOTHING => \true];
         if ($easy->createResponseException) {
@@ -149,9 +149,9 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
     /**
      * @return array<int|string, mixed>
      */
-    private function getDefaultConf(\SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy) : array
+    private function getDefaultConf(EasyHandle $easy) : array
     {
-        $conf = ['_headers' => $easy->request->getHeaders(), \CURLOPT_CUSTOMREQUEST => $easy->request->getMethod(), \CURLOPT_URL => (string) $easy->request->getUri()->withFragment(''), \CURLOPT_RETURNTRANSFER => \false, \CURLOPT_HEADER => \false, \CURLOPT_CONNECTTIMEOUT => 150];
+        $conf = ['_headers' => $easy->request->getHeaders(), \CURLOPT_CUSTOMREQUEST => $easy->request->getMethod(), \CURLOPT_URL => (string) $easy->request->getUri()->withFragment(''), \CURLOPT_RETURNTRANSFER => \false, \CURLOPT_HEADER => \false, \CURLOPT_CONNECTTIMEOUT => 300];
         if (\defined('CURLOPT_PROTOCOLS')) {
             $conf[\CURLOPT_PROTOCOLS] = \CURLPROTO_HTTP | \CURLPROTO_HTTPS;
         }
@@ -165,7 +165,7 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
         }
         return $conf;
     }
-    private function applyMethod(\SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy, array &$conf) : void
+    private function applyMethod(EasyHandle $easy, array &$conf) : void
     {
         $body = $easy->request->getBody();
         $size = $body->getSize();
@@ -217,7 +217,7 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
             $conf[\CURLOPT_HTTPHEADER][] = 'Content-Type:';
         }
     }
-    private function applyHeaders(\SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy, array &$conf) : void
+    private function applyHeaders(EasyHandle $easy, array &$conf) : void
     {
         foreach ($conf['_headers'] as $name => $values) {
             foreach ($values as $value) {
@@ -251,7 +251,7 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
             }
         }
     }
-    private function applyHandlerOptions(\SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy, array &$conf) : void
+    private function applyHandlerOptions(EasyHandle $easy, array &$conf) : void
     {
         $options = $easy->options;
         if (isset($options['verify'])) {
@@ -282,8 +282,11 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
             if ($accept) {
                 $conf[\CURLOPT_ENCODING] = $accept;
             } else {
+                // The empty string enables all available decoders and implicitly
+                // sets a matching 'Accept-Encoding' header.
                 $conf[\CURLOPT_ENCODING] = '';
-                // Don't let curl send the header over the wire
+                // But as the user did not specify any acceptable encodings we need
+                // to overwrite this implicit header with an empty one.
                 $conf[\CURLOPT_HTTPHEADER][] = 'Accept-Encoding:';
             }
         }
@@ -331,10 +334,37 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
                 $scheme = $easy->request->getUri()->getScheme();
                 if (isset($options['proxy'][$scheme])) {
                     $host = $easy->request->getUri()->getHost();
-                    if (!isset($options['proxy']['no']) || !Utils::isHostInNoProxy($host, $options['proxy']['no'])) {
+                    if (isset($options['proxy']['no']) && Utils::isHostInNoProxy($host, $options['proxy']['no'])) {
+                        unset($conf[\CURLOPT_PROXY]);
+                    } else {
                         $conf[\CURLOPT_PROXY] = $options['proxy'][$scheme];
                     }
                 }
+            }
+        }
+        if (isset($options['crypto_method'])) {
+            if (\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $options['crypto_method']) {
+                if (!\defined('CURL_SSLVERSION_TLSv1_0')) {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.0 not supported by your version of cURL');
+                }
+                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_0;
+            } elseif (\STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $options['crypto_method']) {
+                if (!\defined('CURL_SSLVERSION_TLSv1_1')) {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.1 not supported by your version of cURL');
+                }
+                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_1;
+            } elseif (\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $options['crypto_method']) {
+                if (!\defined('CURL_SSLVERSION_TLSv1_2')) {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.2 not supported by your version of cURL');
+                }
+                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
+            } elseif (\defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $options['crypto_method']) {
+                if (!\defined('CURL_SSLVERSION_TLSv1_3')) {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
+                }
+                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
+            } else {
+                throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
             }
         }
         if (isset($options['cert'])) {
@@ -346,8 +376,8 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
             if (!\file_exists($cert)) {
                 throw new \InvalidArgumentException("SSL certificate not found: {$cert}");
             }
-            # OpenSSL (versions 0.9.3 and later) also support "P12" for PKCS#12-encoded files.
-            # see https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
+            // OpenSSL (versions 0.9.3 and later) also support "P12" for PKCS#12-encoded files.
+            // see https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
             $ext = \pathinfo($cert, \PATHINFO_EXTENSION);
             if (\preg_match('#^(der|p12)$#i', $ext)) {
                 $conf[\CURLOPT_SSLCERTTYPE] = \strtoupper($ext);
@@ -394,7 +424,7 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
      *
      * @param callable(RequestInterface, array): PromiseInterface $handler
      */
-    private static function retryFailedRewind(callable $handler, \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy, array $ctx) : PromiseInterface
+    private static function retryFailedRewind(callable $handler, EasyHandle $easy, array $ctx) : PromiseInterface
     {
         try {
             // Only rewind if the body has been read from.
@@ -413,11 +443,11 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
             $ctx['error'] = 'The cURL request was retried 3 times ' . 'and did not succeed. The most likely reason for the failure ' . 'is that cURL was unable to rewind the body of the request ' . 'and subsequent retries resulted in the same error. Turn on ' . 'the debug option to see what went wrong. See ' . 'https://bugs.php.net/bug.php?id=47204 for more information.';
             return self::createRejection($easy, $ctx);
         } else {
-            $easy->options['_curl_retries']++;
+            ++$easy->options['_curl_retries'];
         }
         return $handler($easy->request, $easy->options);
     }
-    private function createHeaderFn(\SimpleCalendar\plugin_deps\GuzzleHttp\Handler\EasyHandle $easy) : callable
+    private function createHeaderFn(EasyHandle $easy) : callable
     {
         if (isset($easy->options['on_headers'])) {
             $onHeaders = $easy->options['on_headers'];
@@ -455,5 +485,12 @@ class CurlFactory implements \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\Curl
             }
             return \strlen($h);
         };
+    }
+    public function __destruct()
+    {
+        foreach ($this->handles as $id => $handle) {
+            \curl_close($handle);
+            unset($this->handles[$id]);
+        }
     }
 }

@@ -4,12 +4,9 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit5b236c569dd3ff8e1122a0229c295f20
+class ComposerStaticInita67033aa514125299772dc15846ed892
 {
     public static $classMap = array (
-        'ComposerAutoloaderInit5b236c569dd3ff8e1122a0229c295f20' => __DIR__ . '/..' . '/composer/autoload_real.php',
-        'Composer\\Autoload\\ClassLoader' => __DIR__ . '/..' . '/composer/ClassLoader.php',
-        'Composer\\Autoload\\ComposerStaticInit5b236c569dd3ff8e1122a0229c295f20' => __DIR__ . '/..' . '/composer/autoload_static.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'SimCal_WP_Requirements' => __DIR__ . '/../..' . '/wp-requirements.php',
         'SimpleCalendar\\Abstracts\\Admin_Page' => __DIR__ . '/../..' . '/abstracts/admin-page.php',
@@ -81,7 +78,7 @@ class ComposerStaticInit5b236c569dd3ff8e1122a0229c295f20
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->classMap = ComposerStaticInit5b236c569dd3ff8e1122a0229c295f20::$classMap;
+            $loader->classMap = ComposerStaticInita67033aa514125299772dc15846ed892::$classMap;
 
         }, null, ClassLoader::class);
     }

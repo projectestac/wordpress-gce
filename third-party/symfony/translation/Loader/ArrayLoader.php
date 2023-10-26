@@ -16,7 +16,7 @@ use SimpleCalendar\plugin_deps\Symfony\Component\Translation\MessageCatalogue;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class ArrayLoader implements \SimpleCalendar\plugin_deps\Symfony\Component\Translation\Loader\LoaderInterface
+class ArrayLoader implements LoaderInterface
 {
     /**
      * {@inheritdoc}
@@ -42,9 +42,11 @@ class ArrayLoader implements \SimpleCalendar\plugin_deps\Symfony\Component\Trans
         foreach ($messages as $key => $value) {
             if (\is_array($value)) {
                 foreach ($this->flatten($value) as $k => $v) {
-                    $result[$key . '.' . $k] = $v;
+                    if (null !== $v) {
+                        $result[$key . '.' . $k] = $v;
+                    }
                 }
-            } else {
+            } elseif (null !== $value) {
                 $result[$key] = $value;
             }
         }

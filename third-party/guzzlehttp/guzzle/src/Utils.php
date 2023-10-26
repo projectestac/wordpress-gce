@@ -71,19 +71,21 @@ final class Utils
      *
      * The returned handler is not wrapped by any default middlewares.
      *
-     * @throws \RuntimeException if no viable Handler is available.
-     *
      * @return callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface Returns the best handler for the given system.
+     *
+     * @throws \RuntimeException if no viable Handler is available.
      */
     public static function chooseHandler() : callable
     {
         $handler = null;
-        if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
-            $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
-        } elseif (\function_exists('curl_exec')) {
-            $handler = new CurlHandler();
-        } elseif (\function_exists('curl_multi_exec')) {
-            $handler = new CurlMultiHandler();
+        if (\defined('CURLOPT_CUSTOMREQUEST')) {
+            if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
+                $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
+            } elseif (\function_exists('curl_exec')) {
+                $handler = new CurlHandler();
+            } elseif (\function_exists('curl_multi_exec')) {
+                $handler = new CurlMultiHandler();
+            }
         }
         if (\ini_get('allow_url_fopen')) {
             $handler = $handler ? Proxy::wrapStreaming($handler, new StreamHandler()) : new StreamHandler();
@@ -97,7 +99,7 @@ final class Utils
      */
     public static function defaultUserAgent() : string
     {
-        return \sprintf('GuzzleHttp/%d', \SimpleCalendar\plugin_deps\GuzzleHttp\ClientInterface::MAJOR_VERSION);
+        return \sprintf('GuzzleHttp/%d', ClientInterface::MAJOR_VERSION);
     }
     /**
      * Returns the default cacert bundle for the current system.
@@ -201,19 +203,17 @@ EOT
             throw new InvalidArgumentException('Empty host provided');
         }
         // Strip port if present.
-        if (\strpos($host, ':')) {
-            /** @var string[] $hostParts will never be false because of the checks above */
-            $hostParts = \explode(':', $host, 2);
-            $host = $hostParts[0];
-        }
+        [$host] = \explode(':', $host, 2);
         foreach ($noProxyArray as $area) {
             // Always match on wildcards.
             if ($area === '*') {
                 return \true;
-            } elseif (empty($area)) {
+            }
+            if (empty($area)) {
                 // Don't match on empty values.
                 continue;
-            } elseif ($area === $host) {
+            }
+            if ($area === $host) {
                 // Exact matches.
                 return \true;
             }
@@ -239,7 +239,7 @@ EOT
      *
      * @throws InvalidArgumentException if the JSON cannot be decoded.
      *
-     * @link https://www.php.net/manual/en/function.json-decode.php
+     * @see https://www.php.net/manual/en/function.json-decode.php
      */
     public static function jsonDecode(string $json, bool $assoc = \false, int $depth = 512, int $options = 0)
     {
@@ -258,7 +258,7 @@ EOT
      *
      * @throws InvalidArgumentException if the JSON cannot be encoded.
      *
-     * @link https://www.php.net/manual/en/function.json-encode.php
+     * @see https://www.php.net/manual/en/function.json-encode.php
      */
     public static function jsonEncode($value, int $options = 0, int $depth = 512) : string
     {
@@ -292,7 +292,7 @@ EOT
             $asciiHost = self::idnToAsci($uri->getHost(), $options, $info);
             if ($asciiHost === \false) {
                 $errorBitSet = $info['errors'] ?? 0;
-                $errorConstants = \array_filter(\array_keys(\get_defined_constants()), static function ($name) {
+                $errorConstants = \array_filter(\array_keys(\get_defined_constants()), static function (string $name) : bool {
                     return \substr($name, 0, 11) === 'IDNA_ERROR_';
                 });
                 $errors = [];
