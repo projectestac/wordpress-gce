@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace SimpleCalendar\plugin_deps\GuzzleHttp\Promise;
 
 final class Each
@@ -20,12 +21,10 @@ final class Each
      * @param mixed    $iterable    Iterator or array to iterate over.
      * @param callable $onFulfilled
      * @param callable $onRejected
-     *
-     * @return PromiseInterface
      */
-    public static function of($iterable, callable $onFulfilled = null, callable $onRejected = null)
+    public static function of($iterable, callable $onFulfilled = null, callable $onRejected = null) : PromiseInterface
     {
-        return (new \SimpleCalendar\plugin_deps\GuzzleHttp\Promise\EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected]))->promise();
+        return (new EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected]))->promise();
     }
     /**
      * Like of, but only allows a certain number of outstanding promises at any
@@ -39,12 +38,10 @@ final class Each
      * @param int|callable $concurrency
      * @param callable     $onFulfilled
      * @param callable     $onRejected
-     *
-     * @return PromiseInterface
      */
-    public static function ofLimit($iterable, $concurrency, callable $onFulfilled = null, callable $onRejected = null)
+    public static function ofLimit($iterable, $concurrency, callable $onFulfilled = null, callable $onRejected = null) : PromiseInterface
     {
-        return (new \SimpleCalendar\plugin_deps\GuzzleHttp\Promise\EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected, 'concurrency' => $concurrency]))->promise();
+        return (new EachPromise($iterable, ['fulfilled' => $onFulfilled, 'rejected' => $onRejected, 'concurrency' => $concurrency]))->promise();
     }
     /**
      * Like limit, but ensures that no promise in the given $iterable argument
@@ -54,12 +51,10 @@ final class Each
      * @param mixed        $iterable
      * @param int|callable $concurrency
      * @param callable     $onFulfilled
-     *
-     * @return PromiseInterface
      */
-    public static function ofLimitAll($iterable, $concurrency, callable $onFulfilled = null)
+    public static function ofLimitAll($iterable, $concurrency, callable $onFulfilled = null) : PromiseInterface
     {
-        return each_limit($iterable, $concurrency, $onFulfilled, function ($reason, $idx, \SimpleCalendar\plugin_deps\GuzzleHttp\Promise\PromiseInterface $aggregate) {
+        return self::ofLimit($iterable, $concurrency, $onFulfilled, function ($reason, $idx, PromiseInterface $aggregate) : void {
             $aggregate->reject($reason);
         });
     }

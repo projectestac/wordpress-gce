@@ -14,8 +14,6 @@ use SimpleCalendar\plugin_deps\Psr\Http\Message\RequestInterface;
  * associative array of curl option constants mapping to values in the
  * **curl** key of the provided request options.
  *
- * @property resource|\CurlMultiHandle $_mh Internal use only. Lazy loaded multi-handle.
- *
  * @final
  */
 class CurlMultiHandler
@@ -29,9 +27,9 @@ class CurlMultiHandler
      */
     private $selectTimeout;
     /**
-     * @var resource|\CurlMultiHandle|null the currently executing resource in `curl_multi_exec`.
+     * @var int Will be higher than 0 when `curl_multi_exec` is still running.
      */
-    private $active;
+    private $active = 0;
     /**
      * @var array Request entry handles, indexed by handle id in `addRequest`.
      *
@@ -48,6 +46,8 @@ class CurlMultiHandler
      * @var array<mixed> An associative array of CURLMOPT_* options and corresponding values for curl_multi_setopt()
      */
     private $options = [];
+    /** @var resource|\CurlMultiHandle */
+    private $_mh;
     /**
      * This handler accepts the following options:
      *
@@ -59,7 +59,7 @@ class CurlMultiHandler
      */
     public function __construct(array $options = [])
     {
-        $this->factory = $options['handle_factory'] ?? new \SimpleCalendar\plugin_deps\GuzzleHttp\Handler\CurlFactory(50);
+        $this->factory = $options['handle_factory'] ?? new CurlFactory(50);
         if (isset($options['select_timeout'])) {
             $this->selectTimeout = $options['select_timeout'];
         } elseif ($selectTimeout = Utils::getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
@@ -69,6 +69,9 @@ class CurlMultiHandler
             $this->selectTimeout = 1;
         }
         $this->options = $options['options'] ?? [];
+        // unsetting the property forces the first access to go through
+        // __get().
+        unset($this->_mh);
     }
     /**
      * @param string $name
@@ -171,6 +174,9 @@ class CurlMultiHandler
      */
     private function cancel($id) : bool
     {
+        if (!\is_int($id)) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an integer to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+        }
         // Cannot cancel if it has been processed.
         if (!isset($this->handles[$id])) {
             return \false;
@@ -184,6 +190,10 @@ class CurlMultiHandler
     private function processMessages() : void
     {
         while ($done = \curl_multi_info_read($this->_mh)) {
+            if ($done['msg'] !== \CURLMSG_DONE) {
+                // if it's not done, then it would be premature to remove the handle. ref https://github.com/guzzle/guzzle/pull/2892#issuecomment-945150216
+                continue;
+            }
             $id = (int) $done['handle'];
             \curl_multi_remove_handle($this->_mh, $done['handle']);
             if (!isset($this->handles[$id])) {
@@ -193,7 +203,7 @@ class CurlMultiHandler
             $entry = $this->handles[$id];
             unset($this->handles[$id], $this->delays[$id]);
             $entry['easy']->errno = $done['result'];
-            $entry['deferred']->resolve(\SimpleCalendar\plugin_deps\GuzzleHttp\Handler\CurlFactory::finish($this, $entry['easy'], $this->factory));
+            $entry['deferred']->resolve(CurlFactory::finish($this, $entry['easy'], $this->factory));
         }
     }
     private function timeToNext() : int

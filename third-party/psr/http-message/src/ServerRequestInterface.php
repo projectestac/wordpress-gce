@@ -1,5 +1,6 @@
 <?php
 
+declare (strict_types=1);
 namespace SimpleCalendar\plugin_deps\Psr\Http\Message;
 
 /**
@@ -40,7 +41,7 @@ namespace SimpleCalendar\plugin_deps\Psr\Http\Message;
  * be implemented such that they retain the internal state of the current
  * message and return an instance that contains the changed state.
  */
-interface ServerRequestInterface extends \SimpleCalendar\plugin_deps\Psr\Http\Message\RequestInterface
+interface ServerRequestInterface extends RequestInterface
 {
     /**
      * Retrieve server parameters.
@@ -214,7 +215,7 @@ interface ServerRequestInterface extends \SimpleCalendar\plugin_deps\Psr\Http\Me
      * @param mixed $default Default value to return if the attribute does not exist.
      * @return mixed
      */
-    public function getAttribute($name, $default = null);
+    public function getAttribute(string $name, $default = null);
     /**
      * Return an instance with the specified derived request attribute.
      *
@@ -230,7 +231,7 @@ interface ServerRequestInterface extends \SimpleCalendar\plugin_deps\Psr\Http\Me
      * @param mixed $value The value of the attribute.
      * @return static
      */
-    public function withAttribute($name, $value);
+    public function withAttribute(string $name, $value);
     /**
      * Return an instance that removes the specified derived request attribute.
      *
@@ -245,5 +246,5 @@ interface ServerRequestInterface extends \SimpleCalendar\plugin_deps\Psr\Http\Me
      * @param string $name The attribute name.
      * @return static
      */
-    public function withoutAttribute($name);
+    public function withoutAttribute(string $name);
 }

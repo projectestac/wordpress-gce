@@ -20,7 +20,7 @@ use Throwable;
  *
  * Depends on the following methods:
  *
- * @method \Carbon\Carbon|\Carbon\CarbonImmutable shiftTimezone($timezone) Set the timezone
+ * @method static shiftTimezone($timezone) Set the timezone
  */
 trait Options
 {
@@ -88,6 +88,7 @@ trait Options
         'I' => '(0|1)',
         'O' => '([+-](1[012]|0[0-9])[0134][05])',
         'P' => '([+-](1[012]|0[0-9]):[0134][05])',
+        'p' => '(Z|[+-](1[012]|0[0-9]):[0134][05])',
         'T' => '([a-zA-Z]{1,5})',
         'Z' => '(-?[1-5]?[0-9]{1,4})',
         'U' => '([0-9]*)',
@@ -128,76 +129,76 @@ trait Options
      *
      * @var string|callable|null
      */
-    protected static $formatFunction = null;
+    protected static $formatFunction;
     /**
      * Function to call instead of createFromFormat.
      *
      * @var string|callable|null
      */
-    protected static $createFromFormatFunction = null;
+    protected static $createFromFormatFunction;
     /**
      * Function to call instead of parse.
      *
      * @var string|callable|null
      */
-    protected static $parseFunction = null;
+    protected static $parseFunction;
     /**
      * Indicates if months should be calculated with overflow.
      * Specific setting.
      *
      * @var bool|null
      */
-    protected $localMonthsOverflow = null;
+    protected $localMonthsOverflow;
     /**
      * Indicates if years should be calculated with overflow.
      * Specific setting.
      *
      * @var bool|null
      */
-    protected $localYearsOverflow = null;
+    protected $localYearsOverflow;
     /**
      * Indicates if the strict mode is in use.
      * Specific setting.
      *
      * @var bool|null
      */
-    protected $localStrictModeEnabled = null;
+    protected $localStrictModeEnabled;
     /**
      * Options for diffForHumans and forHumans methods.
      *
      * @var bool|null
      */
-    protected $localHumanDiffOptions = null;
+    protected $localHumanDiffOptions;
     /**
      * Format to use on string cast.
      *
      * @var string|null
      */
-    protected $localToStringFormat = null;
+    protected $localToStringFormat;
     /**
      * Format to use on JSON serialization.
      *
      * @var string|null
      */
-    protected $localSerializer = null;
+    protected $localSerializer;
     /**
      * Instance-specific macros.
      *
      * @var array|null
      */
-    protected $localMacros = null;
+    protected $localMacros;
     /**
      * Instance-specific generic macros.
      *
      * @var array|null
      */
-    protected $localGenericMacros = null;
+    protected $localGenericMacros;
     /**
      * Function to call instead of format.
      *
      * @var string|callable|null
      */
-    protected $localFormatFunction = null;
+    protected $localFormatFunction;
     /**
      * @deprecated To avoid conflict between different third-party libraries, static setters should not be used.
      *             You should rather use the ->settings() method.
@@ -338,6 +339,9 @@ trait Options
             }
             $this->locale(...$locales);
         }
+        if (isset($settings['innerTimezone'])) {
+            return $this->setTimezone($settings['innerTimezone']);
+        }
         if (isset($settings['timezone'])) {
             return $this->shiftTimezone($settings['timezone']);
         }
@@ -354,7 +358,7 @@ trait Options
         $map = ['localStrictModeEnabled' => 'strictMode', 'localMonthsOverflow' => 'monthOverflow', 'localYearsOverflow' => 'yearOverflow', 'localHumanDiffOptions' => 'humanDiffOptions', 'localToStringFormat' => 'toStringFormat', 'localSerializer' => 'toJsonFormat', 'localMacros' => 'macros', 'localGenericMacros' => 'genericMacros', 'locale' => 'locale', 'tzName' => 'timezone', 'localFormatFunction' => 'formatFunction'];
         foreach ($map as $property => $key) {
             $value = $this->{$property} ?? null;
-            if ($value !== null) {
+            if ($value !== null && ($key !== 'locale' || $value !== 'en' || $this->localTranslator)) {
                 $settings[$key] = $value;
             }
         }
@@ -367,10 +371,10 @@ trait Options
      */
     public function __debugInfo()
     {
-        $infos = \array_filter(\get_object_vars($this), function ($var) {
+        $infos = \array_filter(\get_object_vars($this), static function ($var) {
             return $var;
         });
-        foreach (['dumpProperties', 'constructedObjectId'] as $property) {
+        foreach (['dumpProperties', 'constructedObjectId', 'constructed'] as $property) {
             if (isset($infos[$property])) {
                 unset($infos[$property]);
             }
@@ -380,7 +384,7 @@ trait Options
     }
     protected function addExtraDebugInfos(&$infos) : void
     {
-        if ($this instanceof CarbonInterface || $this instanceof DateTimeInterface) {
+        if ($this instanceof DateTimeInterface) {
             try {
                 if (!isset($infos['date'])) {
                     $infos['date'] = $this->format(CarbonInterface::MOCK_DATETIME_FORMAT);
