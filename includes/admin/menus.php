@@ -227,12 +227,10 @@ if ( is_xtec_super_admin() ) {
 				$footer_text = __('Thanks for using Simple Calendar!', 'google-calendar-events');
 			}
 
-// XTEC ************ AFEGIT - Hidden rating footer link for admins
-// 2016.06.20 @sarjona
-}
-//************ FI
-
+		// XTEC ************ AFEGIT - Hidden rating footer link for admins
+		// 2016.06.20 @sarjona
 		}
+		//************ FI
 
 		return $footer_text;
 	}

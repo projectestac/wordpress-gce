@@ -200,31 +200,32 @@ class Settings implements Meta_Box
 			'icon' => 'simcal-icon-settings',
 		];
 
-		// Output the tabs as list items.
-		foreach ($tabs as $key => $tab) {
-			if (isset($tab['target']) && isset($tab['label'])) {
-				$icon = $tab['icon'] ? $tab['icon'] : 'simcal-icon-panel';
-				$class = $tab['class'] ? $tab['class'] : [];
+			// Output the tabs as list items.
+			foreach ($tabs as $key => $tab) {
+				if (isset($tab['target']) && isset($tab['label'])) {
+					$icon = $tab['icon'] ? $tab['icon'] : 'simcal-icon-panel';
+					$class = $tab['class'] ? $tab['class'] : [];
 
-			if ( isset( $tab['target'] ) && isset( $tab['label'] ) ) {
+				if ( isset( $tab['target'] ) && isset( $tab['label'] ) ) {
 
-				$icon  = $tab['icon'] ? $tab['icon'] : 'simcal-icon-panel';
-				$class = $tab['class'] ? $tab['class'] : array();
+					$icon  = $tab['icon'] ? $tab['icon'] : 'simcal-icon-panel';
+					$class = $tab['class'] ? $tab['class'] : array();
 
-// XTEC ************ MODIFICAT - Hide advanced tab for admins
-// 2016.06.21 @sarjona
-				$style = '';
-				if ( !is_xtec_super_admin() && $key == 'advanced' ) {
-					$style = ' style="display: none; visibility: hidden" ';
+	// XTEC ************ MODIFICAT - Hide advanced tab for admins
+	// 2016.06.21 @sarjona
+					$style = '';
+					if ( !is_xtec_super_admin() && $key == 'advanced' ) {
+						$style = ' style="display: none; visibility: hidden" ';
+					}
+					echo '<li '.$style.' class="' . $key . '-settings ' . $key . '-tab ' . implode( ' ', $class ) . '" data-tab="' . $key . '">';
+	//************ ORIGINAL
+	/*
+					echo '<li class="' . $key . '-settings ' . $key . '-tab ' . implode( ' ', $class ) . '" data-tab="' . $key . '">';
+	*/
+	//************ FI
+					echo '<a href="#' . $tab['target'] . '"><i class="' . $icon . '" ></i> <span>' . esc_html( $tab['label'] ) . '</span></a>';
+					echo '</li>';
 				}
-				echo '<li '.$style.' class="' . $key . '-settings ' . $key . '-tab ' . implode( ' ', $class ) . '" data-tab="' . $key . '">';
-//************ ORIGINAL
-/*
-				echo '<li class="' . $key . '-settings ' . $key . '-tab ' . implode( ' ', $class ) . '" data-tab="' . $key . '">';
-*/
-//************ FI
-				echo '<a href="#' . $tab['target'] . '"><i class="' . $icon . '" ></i> <span>' . esc_html( $tab['label'] ) . '</span></a>';
-				echo '</li>';
 			}
 		}
 	}
