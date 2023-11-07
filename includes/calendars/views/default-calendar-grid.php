@@ -238,21 +238,7 @@ class Default_Calendar_Grid implements Calendar_View
 					<?php } ?>
                 </tr>
                 <tr>
-					<?php
-     // Print day names in short or long form for different viewport sizes.
-
-     $week_starts = $calendar->week_starts;
-     $week_days_short = simcal_get_calendar_names_i18n('day', 'short');
-     $week_days_full = simcal_get_calendar_names_i18n('day', 'full');
-
-     for ($i = $week_starts; $i <= 6; $i++): ?>
-                        <th class="simcal-week-day simcal-week-day-<?php echo $i; ?>"
-                            data-screen-small="<?php echo mb_substr($week_days_short[$i], 0, 1, 'UTF-8'); ?>"
-                            data-screen-medium="<?php echo $week_days_short[$i]; ?>"
-                            data-screen-large="<?php echo $week_days_full[$i]; ?>"><?php echo $week_days_short[
-	$i
-]; ?></th>
-						<?php endfor;
+						<?php
 
 					for ( $i = $week_starts; $i <= 6; $i ++ ) :
 
