@@ -183,6 +183,7 @@ use Throwable;
  * @method $this floorMicroseconds(int|float $precision = 1) Truncate the current instance microsecond with given precision.
  * @method $this ceilMicrosecond(int|float $precision = 1) Ceil the current instance microsecond with given precision.
  * @method $this ceilMicroseconds(int|float $precision = 1) Ceil the current instance microsecond with given precision.
+ * @internal
  */
 class CarbonInterval extends DateInterval implements CarbonConverterInterface
 {

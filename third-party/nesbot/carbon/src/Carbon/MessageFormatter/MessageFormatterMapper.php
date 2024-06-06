@@ -17,6 +17,7 @@ use SimpleCalendar\plugin_deps\Symfony\Component\Translation\Formatter\MessageFo
 $transMethod = new ReflectionMethod(MessageFormatterInterface::class, 'format');
 require $transMethod->getParameters()[0]->hasType() ? __DIR__ . '/../../../lazy/Carbon/MessageFormatter/MessageFormatterMapperStrongType.php' : __DIR__ . '/../../../lazy/Carbon/MessageFormatter/MessageFormatterMapperWeakType.php';
 // @codeCoverageIgnoreEnd
+/** @internal */
 final class MessageFormatterMapper extends LazyMessageFormatter
 {
     /**

@@ -30,6 +30,7 @@ if (\interface_exists('SimpleCalendar\\plugin_deps\\Symfony\\Contracts\\Translat
  * Trait Localization.
  *
  * Embed default and locale translators and translation base methods.
+ * @internal
  */
 trait Localization
 {
