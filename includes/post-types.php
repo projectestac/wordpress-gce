@@ -231,6 +231,14 @@ class Post_Types
 				if (is_admin() && !defined('DOING_AJAX')) {
 					return '';
 				} else {
+
+					// XTEC ************ AFEGIT - Add private and protected post option
+					// 2017.03.06 @xaviernietosanchez
+					if ( post_password_required( $post ) ) {
+						return get_the_password_form($post);
+					}
+					// ************ FI
+
 					ob_start();
 					simcal_print_calendar($post);
 					return ob_get_clean();

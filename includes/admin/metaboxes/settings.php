@@ -204,7 +204,19 @@ class Settings implements Meta_Box
 				$icon = $tab['icon'] ? $tab['icon'] : 'simcal-icon-panel';
 				$class = $tab['class'] ? $tab['class'] : [];
 
+// XTEC ************ MODIFICAT - Hide advanced tab for admins
+// 2016.06.21 @sarjona
+                $style = '';
+                if ($key === 'advanced' && !is_xtec_super_admin()) {
+                    $style = ' style="display: none; visibility: hidden" ';
+                }
+                echo '<li ' . $style . ' class="' . $key . '-settings ' . $key . '-tab ' . implode(' ', $class) . '" data-tab="' . $key . '">';
+// ************ ORIGINAL
+/*
 				echo '<li class="' . $key . '-settings ' . $key . '-tab ' . implode(' ', $class) . '" data-tab="' . $key . '">';
+*/
+// ************ FI
+
 				echo '<a href="#' .
 					$tab['target'] .
 					'"><i class="' .
@@ -516,11 +528,35 @@ class Settings implements Meta_Box
 	{
 		?>
 		<table>
+
+<!--
+// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona
+-->
+<?php
+if ( is_xtec_super_admin() ) {
+?>
+<!--
+//************ FI
+-->
+
 			<thead>
 				<tr>
 					<th colspan="2"><?php _e('Miscellaneous', 'google-calendar-events'); ?></th>
 				</tr>
 			</thead>
+
+<!--
+// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona
+-->
+<?php
+}
+?>
+<!--
+//************ FI
+-->
+
 			<tbody class="simcal-panel-section">
 				<tr class="simcal-panel-field">
 					<th>
@@ -544,6 +580,18 @@ class Settings implements Meta_Box
       ?>
 					</td>
 				</tr>
+
+<!--
+// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona
+-->
+<?php
+if ( is_xtec_super_admin() ) {
+?>
+<!--
+//************ FI
+-->
+
 				<tr class="simcal-panel-field">
 					<th>
 						<label for="_no_events_message"><?php _e('No Events Message', 'google-calendar-events'); ?></label>
@@ -609,6 +657,18 @@ class Settings implements Meta_Box
       ]);?>
 					</td>
 				</tr>
+
+<!--
+// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona
+-->
+<?php
+}
+?>
+<!--
+//************ FI
+-->
+
 			</tbody>
 		</table>
 		<?php
@@ -946,8 +1006,17 @@ class Settings implements Meta_Box
     $cache_freq = esc_attr(get_post_meta($post->ID, '_feed_cache_user_amount', true));
     $cache_unit = esc_attr(get_post_meta($post->ID, '_feed_cache_user_unit', true));
 
+// XTEC ************ MODIFICAT - Set default cache value to 5 minutes
+// 2016.09.07 @aginard
+	$cache_freq = intval( $cache_freq ) && $cache_freq >= 0 ? $cache_freq : 5;
+	$cache_unit = $cache_unit ? $cache_unit : '60';
+//************ ORIGINAL
+/*
     $cache_freq = intval($cache_freq) && $cache_freq >= 0 ? $cache_freq : 2;
     $cache_unit = $cache_unit ? $cache_unit : '3600';
+*/
+//************ FI
+
     ?>
 				<tr class="simcal-panel-field">
 					<th>

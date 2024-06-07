@@ -114,6 +114,18 @@ class Default_Calendar_Admin
      ?>
 				</td>
 			</tr>
+
+<!--
+// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona
+-->
+<?php
+if ( is_xtec_super_admin() ) {
+?>
+<!--
+//************ FI
+-->
+
 			<tr class="simcal-panel-field simcal-default-calendar-grid" style="display: none;">
 				<th><label for="_default_calendar_trim_titles"><?php _e('Trim Event Titles', 'google-calendar-events'); ?></label></th>
 				<td>
@@ -152,6 +164,18 @@ class Default_Calendar_Admin
      ?>
 				</td>
 			</tr>
+
+<!--
+// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona
+-->
+<?php
+}
+?>
+<!--
+//************ FI
+-->
+
 			<tr class="simcal-panel-field simcal-default-calendar-list" style="display: none;">
 				<th><label for="_default_calendar_list_grouped_span"><?php _e('Span', 'google-calendar-events'); ?></label></th>
 				<td>
@@ -305,6 +329,18 @@ class Default_Calendar_Admin
 				</td>
 			</tr>
 			</tbody>
+
+<!--
+// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona
+-->
+<?php
+if ( is_xtec_super_admin() ) {
+?>
+<!--
+//************ FI
+-->
+
 			<?php
    // TODO Defaults repeated here and in process_meta(). Need to consolidate at some point.
    $settings = get_option('simple-calendar_settings_calendars');
@@ -383,6 +419,17 @@ class Default_Calendar_Admin
      ?>
 				</td>
 			</tr>
+
+<!--
+// XTEC ************ AFEGIT - Hidden some calendar form fields for admins
+// 2016.06.21 @sarjona
+-->
+<?php
+}
+?>
+<!--
+//************ FI
+-->
 
 			</tbody>
 			<?php  ?>

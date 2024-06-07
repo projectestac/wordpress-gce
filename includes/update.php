@@ -141,6 +141,13 @@ class Update
 
 		delete_transient('_simple-calendar_activation_redirect');
 
+// XTEC ************ AFEGIT - Don't redirect to welcome page unless is accessing a superadmin
+// 2016.09.08 @aginard
+        if (!is_xtec_super_admin()) {
+            return;
+        }
+// ************ FI
+
 		// Do not redirect if already on welcome page screen.
 		if (!empty($_GET['page']) && in_array($_GET['page'], ['simple-calendar_about'])) {
 			return;
