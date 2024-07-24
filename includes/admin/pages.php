@@ -258,6 +258,10 @@ class Pages
     			}
     			echo '</div>';
     			?>
+
+<!-- XTEC ************ ELIMINAT - Removed rating request. -->
+<!-- 2024.06.11 @aginard -->
+<!--
 								<div class="simcal-w-[39%] simcal-h-[452px] simcal-ml-[2%] simcal-rounded-[5px] simcal-bg-white">
 									<div class="simcal-mt-[75px]">
 										<img class="simcal-m-auto" src="<?php echo esc_url($admin_image_about_path) . '/rating.png'; ?>" />
@@ -285,6 +289,10 @@ class Pages
           ); ?></a>
 									</div>
 								</div>
+
+-->
+<!-- ************ FI -->
+
 								<?php echo '</div>';
     		}
     	}
@@ -292,6 +300,12 @@ class Pages
     	if (
     		!is_plugin_active('Simple-Calendar-Google-Calendar-Pro-main/simple-calendar-google-calendar-pro.php') &&
     		!is_plugin_active('Simple-Calendar-Google-Calendar-Pro/simple-calendar-google-calendar-pro.php')
+
+			// XTEC ************ AFEGIT - Hide Go Pro option for non-superadmins
+            // 2024.06.11 @aginard
+            && is_xtec_super_admin()
+            // ************ FI
+
     	) { ?>
 								<div class="simcal-mr-[5%] simcal-mt-[50px] simcal-p-[3%] simcal-max-w-[100%] simcal-flex simcal-bg-sc_green-100 simcal-font-poppins simcal-rounded">
 					<div class="simcal-w-[36%]">
