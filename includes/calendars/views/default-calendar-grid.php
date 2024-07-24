@@ -242,22 +242,55 @@ class Default_Calendar_Grid implements Calendar_View
      $week_days_full = simcal_get_calendar_names_i18n('day', 'full');
 
      for ($i = $week_starts; $i <= 6; $i++): ?>
+	<!--
+	// XTEC ************ MODIFICAT - Change short week-day (to avoid show all "d" in Catalan)
+	// 2016.06.27 @sarjona
+	-->
+	<th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
+             data-screen-small="<?php echo $week_days_short[ $i ]; ?>"
+             data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
+             data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+	<!--//************ ORIGINAL -->
+	<!--
                         <th class="simcal-week-day simcal-week-day-<?php echo $i; ?>"
                             data-screen-small="<?php echo mb_substr($week_days_short[$i], 0, 1, 'UTF-8'); ?>"
                             data-screen-medium="<?php echo $week_days_short[$i]; ?>"
                             data-screen-large="<?php echo $week_days_full[$i]; ?>"><?php echo $week_days_short[
 	$i
 ]; ?></th>
+
+	-->
+	<!--
+	//************ FI
+	-->
+
 						<?php endfor;
 
      if ($week_starts !== 0):
      	for ($i = 0; $i < $week_starts; $i++): ?>
+
+		<!--
+		// XTEC ************ MODIFICAT - Change short week-day (to avoid show all "d" in Catalan)
+		// 2016.06.27 @sarjona
+		-->
+		<th class="simcal-week-day simcal-week-day-<?php echo $i ?>"
+                data-screen-small="<?php echo $week_days_short[ $i ]; ?>"
+                data-screen-medium="<?php echo $week_days_short[ $i ]; ?>"
+                data-screen-large="<?php echo $week_days_full[ $i ]; ?>"><?php echo $week_days_short[ $i ]; ?></th>
+		<!--// ************ ORIGINAL -->
+		<!--
                             <th class="simcal-week-day simcal-week-day-<?php echo $i; ?>"
                                 data-screen-small="<?php echo mb_substr($week_days_short[$i], 0, 1, 'UTF-8'); ?>"
                                 data-screen-medium="<?php echo $week_days_short[$i]; ?>"
                                 data-screen-large="<?php echo $week_days_full[$i]; ?>"><?php echo $week_days_short[
 	$i
 ]; ?></th>
+
+		-->
+		<!--
+		// ************ FI
+		-->
+
 							<?php endfor;
      endif;
      ?>
@@ -577,6 +610,37 @@ class Default_Calendar_Grid implements Calendar_View
 
 		echo "\t" . '</tr>' . "\n";
 		echo '</tbody>' . "\n";
+
+		// XTEC ************ AFEGIT - Show event information on mouse over
+		// 2016.11.18 @fbusquets - https://github.com/projectestac/agora_nodes/issues/485
+		echo "<script type=\"text/javascript\">
+		jQuery(
+		// Handle only events originated on '.simcal-event-dots' (cells with dots)
+		jQuery('.simcal-calendar').on('mouseenter', '.simcal-events-dots', function(){
+
+			// Save the cell that originated the mouse event (assigned to 'this' by jQuery)
+			// for future reference
+			var that = this;
+
+			// Set a timeout handler that will trigger a 'click' on the cell
+			var timeoutId = setTimeout(function(){
+			jQuery(that).removeData('simcalTimeoutId');
+			jQuery(that).trigger('click');
+			}, 500);
+
+			// Save 'timeoutId' for future reference
+			jQuery(this).data('simcalTimeoutId', timeoutId);
+
+		}).on('mouseleave', '.simcal-events-dots', function(){
+			// Clear timeout and remove reference
+			var timeoutId = jQuery(this).data('simcalTimeoutId');
+			if(timeoutId) {
+			clearTimeout(timeoutId);
+			jQuery(this).removeData('simcalTimeoutId');
+			}
+		})
+		);</script>";
+		//************ FI
 
 		return ob_get_clean();
 	}
