@@ -55,7 +55,14 @@ class Calendar extends \WP_Widget implements Widget
 
 		if (is_admin()) {
 			if (!defined('DOING_AJAX')) {
+				// XTEC ************ MODIFICAT - Added extra-param to get also grouped calendars
+				// 2016.14.10 @xaviernietosanchez
+				$this->calendars = simcal_get_calendars( '', true, true );
+				// ************ ORIGINAL
+				/*
 				$this->calendars = simcal_get_calendars();
+				*/
+				// ************ FI
 			} else {
 				$this->calendars = get_transient('_simple-calendar_feed_ids');
 			}
@@ -80,7 +87,22 @@ class Calendar extends \WP_Widget implements Widget
 
 		$id = isset($instance['calendar_id']) ? absint($instance['calendar_id']) : 0;
 		if ($id > 0) {
+
+			// XTEC ************ AFEGIT - Check if is a private calendar or protected with password
+            // 2017.03.07 @xaviernietosanchez
+            if (get_post_status($id) !== 'private') {
+                if (post_password_required($id)) {
+                    echo get_the_password_form($id);
+                } else {
+                    // ************ FI
+
 			simcal_print_calendar($id);
+
+			// XTEC ************ AFEGIT - Check if is a private calendar or protected with password
+            // 2017.03.07 @xaviernietosanchez
+				}
+			}
+			// ************ FI
 		}
 
 		echo $args['after_widget'];

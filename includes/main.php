@@ -101,6 +101,11 @@ final class Plugin
 	 */
 	public function __construct()
 	{
+		// XTEC ************ AFEGIT - Load localization
+		// 2016.06.20 @sarjona
+		load_plugin_textdomain('google-calendar-events', false, dirname(plugin_basename(SIMPLE_CALENDAR_MAIN_FILE)) . '/i18n/');
+		// ************ FI
+
 		// Load plugin.
 		require_once 'autoload.php';
 		$this->locale = apply_filters('plugin_locale', get_locale(), 'google-calendar-events');
