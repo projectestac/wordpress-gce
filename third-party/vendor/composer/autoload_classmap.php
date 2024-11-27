@@ -56,7 +56,7 @@ return array(
     'SimpleCalendar\\plugin_deps\\Carbon\\MessageFormatter\\LazyMessageFormatter' => $baseDir . '/nesbot/carbon/lazy/Carbon/MessageFormatter/MessageFormatterMapperWeakType.php',
     'SimpleCalendar\\plugin_deps\\Carbon\\MessageFormatter\\MessageFormatterMapper' => $baseDir . '/nesbot/carbon/src/Carbon/MessageFormatter/MessageFormatterMapper.php',
     'SimpleCalendar\\plugin_deps\\Carbon\\PHPStan\\AbstractMacro' => $baseDir . '/nesbot/carbon/src/Carbon/PHPStan/AbstractMacro.php',
-    'SimpleCalendar\\plugin_deps\\Carbon\\PHPStan\\AbstractReflectionMacro' => $baseDir . '/nesbot/carbon/lazy/Carbon/PHPStan/AbstractMacroBuiltin.php',
+    'SimpleCalendar\\plugin_deps\\Carbon\\PHPStan\\AbstractReflectionMacro' => $baseDir . '/nesbot/carbon/lazy/Carbon/PHPStan/AbstractMacroStatic.php',
     'SimpleCalendar\\plugin_deps\\Carbon\\PHPStan\\LazyMacro' => $baseDir . '/nesbot/carbon/lazy/Carbon/PHPStan/MacroWeakType.php',
     'SimpleCalendar\\plugin_deps\\Carbon\\PHPStan\\Macro' => $baseDir . '/nesbot/carbon/src/Carbon/PHPStan/Macro.php',
     'SimpleCalendar\\plugin_deps\\Carbon\\PHPStan\\MacroExtension' => $baseDir . '/nesbot/carbon/src/Carbon/PHPStan/MacroExtension.php',
